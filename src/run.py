@@ -41,7 +41,7 @@ input_files.extend([
 
 # create results (output) directory
 if outdir is None:
-    outdir = os.path.join(args.indir, "fs-results")
+    outdir = os.path.join(args.indir, "swd-results")
 if not os.path.isdir(outdir):
     os.mkdir(outdir)
 results_dir = os.path.join(outdir, TIMESTAMP)

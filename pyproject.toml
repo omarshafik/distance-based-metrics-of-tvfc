@@ -1,6 +1,6 @@
 [project]
 name = "distance_based_metrics"
-version = "0.1.0"
+version = "1.0.0"
 description = "Python project of the study procedures in 'Distance-Based Metrics of Time-Varying Functional Connectivity'"
 authors = [
     {name = "Omar Shafik", email = "o.shafik13@gmail.com"},
