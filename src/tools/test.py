@@ -80,12 +80,12 @@ def test_identical_distribution(timeseries: np.ndarray, nrefs: int = 30) -> int:
     """
     ks_pvalues = []
     sample_ref_edges = timeseries[np.random.choice(timeseries.shape[0], size=nrefs, replace=False)]
-    for refnode in sample_ref_edges:
+    for refparcel in sample_ref_edges:
         ks_pvalues.extend(np.squeeze(Parallel()(
             delayed(stats.kstest)(
-                    node,
-                    refnode
-            ) for node in timeseries))[:, 1])
+                    parcel,
+                    refparcel
+            ) for parcel in timeseries))[:, 1])
     ks_pvalues = np.array(ks_pvalues)
     return np.sum(ks_pvalues < 0.05) / len(ks_pvalues)
 
@@ -111,10 +111,10 @@ def get_edges_of_interest(
         h1 (bool, optional): Test the time-average estimate null hypothesis (H1)
         h2 (bool, optional): Test the edge variance null hypothesis (H2)
     """
-    num_nodes = empirical_timeseries.shape[0]
-    edges_of_interest = np.zeros(int((num_nodes * (num_nodes - 1)) / 2), dtype=int)
+    num_parcels = empirical_timeseries.shape[0]
+    edges_of_interest = np.zeros(int((num_parcels * (num_parcels - 1)) / 2), dtype=int)
     if h1:
-        estimates_empirical = swd(
+        time_avg_estimates_empirical = swd(
             empirical_timeseries, window_size=empirical_timeseries.shape[-1], pairs=pairs)
         time_avg_estimates_surrogate = swd(
             surrogate_timeseries, window_size=empirical_timeseries.shape[-1])
@@ -123,8 +123,8 @@ def get_edges_of_interest(
             (1 - alpha),
             loc=np.mean(time_avg_estimates_surrogate),
             scale=np.std(time_avg_estimates_surrogate))
-        edges_of_interest = np.where(estimates_empirical < time_avg_lower_bound, 1, 0)
-        edges_of_interest += np.where(estimates_empirical > time_avg_higher_bound, 1, 0)
+        edges_of_interest = np.where(time_avg_estimates_empirical < time_avg_lower_bound, 1, 0)
+        edges_of_interest += np.where(time_avg_estimates_empirical > time_avg_higher_bound, 1, 0)
 
     if h2 and window_size is not None:
         estimates_empirical = swd(

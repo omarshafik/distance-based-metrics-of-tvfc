@@ -43,7 +43,7 @@ def swd_no_parallel(
         np.ndarray: numpy array of TVC estimates
     """
     if pairs is None:
-        # get an array of unique pair identifier, which will find out unique combinations of nodes
+        # get an array of unique pair identifier, which will find out unique combinations of parcels
         pairs = np.array(list(combinations(range(timeseries.shape[0]), 2)))
 
     if derivative is None and use_derivative is True:
@@ -52,7 +52,7 @@ def swd_no_parallel(
     # Get distances between amplitudes
     distance_ts = np.abs(timeseries[pairs[:, 0]] - timeseries[pairs[:, 1]])
 
-    # use differenced data to get distance between rates of change of node pairs (if specified)
+    # use differenced data to get distance between rates of change of parcel pairs (if specified)
     if use_derivative is True:
         distance_diff_ts = np.abs(
             derivative[pairs[:, 0]] - derivative[pairs[:, 1]])
@@ -119,7 +119,7 @@ def swd(
         np.ndarray: numpy array of TVC estimates
     """
     if pairs is None:
-        # get an array of unique pair identifier, which will find out unique combinations of nodes
+        # get an array of unique pair identifier, which will find out unique combinations of parcels
         pairs = np.array(list(combinations(range(timeseries.shape[0]), 2)))
 
     timeseries = common.normalized(timeseries, axis=-1)

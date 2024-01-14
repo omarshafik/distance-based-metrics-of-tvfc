@@ -45,16 +45,16 @@ def plot_timeseries_and_estimates(
         for start, end in find_segments(negative_sig_tps):
             plt.axvspan(start, end, color='blue', alpha=0.2)
 
-    plt.xlabel('Time')
+    plt.xlabel('Time (TR)')
     plt.ylabel('Amplitude')
-    plt.title('Node Time Series')
+    plt.title('Parcel Time Series')
     plt.legend()
 
     plt.subplot(2, 1, 2)
     for sim_idx, estimates in enumerate(estimates_array):
         plt.plot(estimates, label=estimates_labels[sim_idx])
 
-    plt.xlabel('Time')
+    plt.xlabel('Time (TR)')
     plt.ylabel('Estimate')
     plt.title('Edge Time Series')
     plt.legend()

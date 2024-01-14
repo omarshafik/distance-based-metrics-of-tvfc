@@ -20,10 +20,10 @@ def analyze_surrogate_statistics(
 
     # generate Surrogate data with the same frequency spectrum,
     # and autocorrelation as empirical
-    white_noise = np.random.randn(*emp_data.shape)
+    noise = np.random.uniform(low=-np.pi, high=np.pi, size=emp_data.shape)
     power_spectrum = np.mean(np.abs(np.fft.fft(emp_data, axis=-1)), axis=0)
     simulated_spectrum = power_spectrum \
-        * np.exp(1j * np.angle(np.fft.fft(white_noise, axis=-1)))
+        * np.exp(1j * noise)
     sc_data = np.fft.ifft(simulated_spectrum, axis=-1).real
     emp_cov = np.cov(emp_data)
     chol_decomposition = np.linalg.cholesky(emp_cov)
@@ -48,19 +48,19 @@ def analyze_surrogate_statistics(
         emp_data,
         xlabel="Lag",
         ylabel="Correlation",
-        title="Autocorrelation of Empirical Data",
+        title="Empirical",
         out=os.path.join(surrogate_dir, "autcorrelation-empirical.png"))
     tools.plot_autocorrelation(
         sc_data,
         xlabel="Lag",
         ylabel="Correlation",
-        title="Autocorrelation of SC Surrogate Data",
+        title="SC Surrogate",
         out=os.path.join(surrogate_dir, "autcorrelation-SC-surrogate.png"))
     tools.plot_autocorrelation(
         scc_data,
         xlabel="Lag",
         ylabel="Correlation",
-        title="Autocorrelation of SCC Surrogate Data",
+        title="SCC Surrogate",
         out=os.path.join(surrogate_dir, "autcorrelation-SCC-surrogate.png"))
 
     window_sizes = [9, 19, 29, 39, 49, 59, 69, 99, 299, 499, emp_data.shape[-1]]
@@ -76,7 +76,7 @@ def analyze_surrogate_statistics(
             ["Empirical", "SC Surrogate"],
             xlabel="Estimate",
             ylabel="Density",
-            title="Distributions of tvFC Estimates for Empirical and SC Surrogate Data",
+            title=f"w = {window_size}",
             out=os.path.join(
                 surrogate_dir,
                 f"tvFC-estimates-SC-overlapping-distribution-{window_size}.png"
@@ -86,7 +86,7 @@ def analyze_surrogate_statistics(
             ["Empirical", "SCC Surrogate"],
             xlabel="Estimate",
             ylabel="Density",
-            title="Distributions of tvFC Estimates for Empirical and SCC Surrogate Data",
+            title=f"w = {window_size}",
             out=os.path.join(
                 surrogate_dir,
                 f"tvFC-estimates-SCC-overlapping-distribution-{window_size}.png"
@@ -100,10 +100,10 @@ def analyze_surrogate_statistics(
                     edge_variance_empirical,
                     edge_variance_scc,
                 ],
-                ["Empirical", "Surrogate"],
+                ["Empirical", "SCC Surrogate"],
                 xlabel="Edge Variance",
                 ylabel="Density",
-                title="Distributions of Edge Variances for Empirical and SCC Surrogate Data",
+                title=f"w = {window_size}",
                 out=os.path.join(
                     surrogate_dir,
                     f"edge-variance-distribution-{window_size}.png"
@@ -129,12 +129,11 @@ def analyze_surrogate_statistics(
             significance_rate_h1 = significance_count_h1 / np.size(estimates_significance)
             h1_type1_error_rate = \
                 (total_significance_count - significance_count_h1) / total_significance_count
-            print(f"INFO: significant edge count of H1 (w={window_size}): " + \
-                  f"{significance_count_h1}")
+            print(f"INFO: significant edge count of H1: {np.sum(interest_edges_h1)}")
             print("INFO: significant tvFC estimates count of H1 " + \
                 "(time-averaged estimates' null): " + \
                 f"{significance_count_h1}, {significance_rate_h1}")
-            print(f"INFO: H1 type 1 error rate (w={window_size}): {h1_type1_error_rate}")
+            print(f"INFO: H1 type 1 error rate: {h1_type1_error_rate}")
 
             # Test edge variance null hypothesis (H2)
             interest_edges_h2 = tools.get_edges_of_interest(

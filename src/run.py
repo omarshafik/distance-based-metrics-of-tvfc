@@ -48,7 +48,9 @@ results_dir = os.path.join(outdir, TIMESTAMP)
 os.mkdir(results_dir)
 
 file_to_process = input_files[np.random.choice(len(input_files), size=1)[0]]
+print(f"INFO: Selected file {os.path.basename(file_to_process)}")
 procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir)
 procedures.analyze_surrogate_statistics(file_to_process, results_dir)
 procedures.analyze_sample_statistics(file_to_process, results_dir)
 procedures.analyze_between_subjects_ensemble_statistics(input_files, results_dir)
+procedures.analyze_within_subject_swd_swc_correlation(file_to_process, results_dir)

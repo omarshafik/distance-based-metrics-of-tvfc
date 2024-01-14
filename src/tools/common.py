@@ -147,7 +147,9 @@ def prep_emp_data(emp_data, num_sessions = 4):
     session_length = int(emp_data.shape[-1] / num_sessions)
     emp_data_prepped = np.array([[]])
     for session_idx in range(num_sessions):
-        emp_session_data = emp_data[:, (session_idx * session_length): ((session_idx * session_length) + session_length)]
+        session_start = (session_idx * session_length)
+        session_end = session_start + session_length
+        emp_session_data = emp_data[:, session_start:session_end]
         emp_session_data = normalized(emp_session_data, axis=-1)
         emp_session_data = sliding_average(emp_session_data, window_size=5, pad=False)
         emp_session_data = normalized(emp_session_data, axis=-1)

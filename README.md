@@ -7,4 +7,4 @@ After installing pdm, you can install the dependencies by running `python -m pdm
 
 ## Run
 To run the study procedures and create a results directory under the parent directory of the given input directory, run the command (assuming you are opening the terminal from the top repository directory):
-`python .\src\run.py --indir /path/to/nodes/timeseries/directory`
+`python .\src\run.py --indir /path/to/parcels/timeseries/directory`
