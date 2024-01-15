@@ -67,12 +67,9 @@ def swd_no_parallel(
     #  - stabilize mean and variance
     #  - allow distance-based values to change on a continous scale (-inf,+inf)
     #  - decrease distribution skewness
-    if transform is not None:
-        distance_ts = transform(distance_ts + safe_guard)
-        if return_distance is False:
-            distance_ts = -1 * distance_ts
-
-    if transform is None and return_distance is False:
+    if return_distance is False and transform is not None:
+        distance_ts = -1 * transform(distance_ts + safe_guard)
+    elif transform is None and return_distance is False:
         distance_ts = 1 / (distance_ts + safe_guard)
 
     # get sliding window average (sample mean) values over the given window (sample) size
@@ -125,9 +122,7 @@ def swd(
     timeseries = common.normalized(timeseries, axis=-1)
 
     if use_derivative:
-        derivative = common.differenced(timeseries, axis=-1)
-        derivative = common.sliding_average(derivative, window_size=5)
-        derivative = common.normalized(derivative, axis=-1)
+        derivative = common.differenced(timeseries, normalize=True, axis=-1)
     else:
         derivative = None
 
