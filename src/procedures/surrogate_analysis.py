@@ -138,7 +138,7 @@ def analyze_surrogate_statistics(
             estimates_significance = np.abs(tools.significant_estimates(estimates_empirical))
             total_significance_count = np.sum(estimates_significance)
             significance_rate = total_significance_count / np.size(estimates_significance)
-            print_info("INFO: total number of significant tvFC estimates (before filtering, results_dirname): " + \
+            print_info("INFO: total number of significant tvFC estimates (before filtering): " + \
                 f"{total_significance_count}, {significance_rate}", results_dirname)
 
             # Test time-averaged estimates null hypothesis (H1)
@@ -175,9 +175,9 @@ def analyze_surrogate_statistics(
             significance_rate_h2 = significance_count_h2 / np.size(estimates_significance)
             h2_type1_error_rate = \
                 (total_significance_count - significance_count_h2) / total_significance_count
-            print_info(f"INFO: significant edge count of H2 (w={window_size}, results_dirname): " + \
+            print_info(f"INFO: significant edge count of H2 (w={window_size}): " + \
                   f"{np.sum(interest_edges_h2)}", results_dirname)
-            print_info("INFO: significant tvFC estimates count of H2 (edge variance null, results_dirname): " + \
+            print_info("INFO: significant tvFC estimates count of H2 (edge variance null): " + \
                 f"{significance_count_h2}, {significance_rate_h2}", results_dirname)
             print_info(f"INFO: H2 type 1 error rate (w={window_size}): {h2_type1_error_rate}", results_dirname)
 
@@ -190,7 +190,7 @@ def analyze_surrogate_statistics(
             significance_rate_h1h2 = significance_count_h1h2 / np.size(estimates_significance)
             all_type1_error_rate = \
                 (total_significance_count - significance_count_h1h2) / total_significance_count
-            print_info(f"INFO: significant edge count of H1 & H2 (w={window_size}, results_dirname):" + \
+            print_info(f"INFO: significant edge count of H1 & H2 (w={window_size}):" + \
                 f" {np.sum(interest_edges_h1h2)}", results_dirname)
             print_info("INFO: significant tvFC estimates count of H1 & H2: " + \
                 f"{significance_count_h1h2}, {significance_rate_h1h2}", results_dirname)
