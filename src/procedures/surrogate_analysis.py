@@ -139,7 +139,7 @@ def analyze_surrogate_statistics(
             total_significance_count = np.sum(estimates_significance)
             significance_rate = total_significance_count / np.size(estimates_significance)
             print_info("INFO: total number of significant tvFC estimates (before filtering, results_dirname): " + \
-                f"{total_significance_count}, {significance_rate}")
+                f"{total_significance_count}, {significance_rate}", results_dirname)
 
             # Test time-averaged estimates null hypothesis (H1)
             interest_edges_h1 = tools.get_edges_of_interest(
@@ -158,7 +158,7 @@ def analyze_surrogate_statistics(
             print_info(f"INFO: significant edge count of H1: {np.sum(interest_edges_h1)}", results_dirname)
             print_info("INFO: significant tvFC estimates count of H1 " + \
                 "(time-averaged estimates' null): " + \
-                f"{significance_count_h1}, {significance_rate_h1}")
+                f"{significance_count_h1}, {significance_rate_h1}", results_dirname)
             print_info(f"INFO: H1 type 1 error rate: {h1_type1_error_rate}", results_dirname)
 
             # Test edge variance null hypothesis (H2)
@@ -176,9 +176,9 @@ def analyze_surrogate_statistics(
             h2_type1_error_rate = \
                 (total_significance_count - significance_count_h2) / total_significance_count
             print_info(f"INFO: significant edge count of H2 (w={window_size}, results_dirname): " + \
-                  f"{np.sum(interest_edges_h2)}")
+                  f"{np.sum(interest_edges_h2)}", results_dirname)
             print_info("INFO: significant tvFC estimates count of H2 (edge variance null, results_dirname): " + \
-                f"{significance_count_h2}, {significance_rate_h2}")
+                f"{significance_count_h2}, {significance_rate_h2}", results_dirname)
             print_info(f"INFO: H2 type 1 error rate (w={window_size}): {h2_type1_error_rate}", results_dirname)
 
             # find significantly variant/different tvFC estimates that belong to
@@ -191,9 +191,9 @@ def analyze_surrogate_statistics(
             all_type1_error_rate = \
                 (total_significance_count - significance_count_h1h2) / total_significance_count
             print_info(f"INFO: significant edge count of H1 & H2 (w={window_size}, results_dirname):" + \
-                f" {np.sum(interest_edges_h1h2)}")
+                f" {np.sum(interest_edges_h1h2)}", results_dirname)
             print_info("INFO: significant tvFC estimates count of H1 & H2: " + \
-                f"{significance_count_h1h2}, {significance_rate_h1h2}")
+                f"{significance_count_h1h2}, {significance_rate_h1h2}", results_dirname)
             print_info(f"INFO: H1 & H2 type 1 error rate (w={window_size}): {all_type1_error_rate}", results_dirname)
 
         # End of window size loop

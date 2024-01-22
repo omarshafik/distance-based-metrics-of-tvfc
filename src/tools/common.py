@@ -172,3 +172,4 @@ def print_info(info_str: str, outdir: str = None):
         log_filename = os.path.join(outdir, "info.log")
         with open(log_filename, "a", encoding="utf-8") as logfile:
             logfile.write(info_str)
+            logfile.write("\n")

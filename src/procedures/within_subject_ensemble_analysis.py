@@ -31,7 +31,7 @@ def analyze_within_subject_ensemble_statistics(
         swd_estimates = tools.swd(
             emp_data, window_size=window_size)
         print_info("INFO: empirical SWD-based estimates mean, variance: " +
-            f"{np.mean(swd_estimates), np.var(swd_estimates)}")
+            f"{np.mean(swd_estimates), np.var(swd_estimates)}", results_dirname)
         tools.plot_distribution(
             swd_estimates,
             xlabel="Estimate",
@@ -72,7 +72,7 @@ def analyze_within_subject_ensemble_statistics(
         mean_stationary_pval = sm.tsa.adfuller(np.mean(swd_estimates, axis=0))[1]
         var_stationary_pval = sm.tsa.adfuller(np.var(swd_estimates, axis=0))[1]
         print_info("Stationarity (mean, variance, results_dirname): " + \
-            f"({mean_stationary_pval}, {var_stationary_pval})")
+            f"({mean_stationary_pval}, {var_stationary_pval})", results_dirname)
         # End of window size loop
 
 def analyze_within_subject_swd_swc_correlation(
