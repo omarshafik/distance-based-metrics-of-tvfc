@@ -23,7 +23,7 @@ def analyze_within_subject_ensemble_statistics(
 
     emp_dir = os.path.join(results_dirname, "within-subject-empirical-ensemble-statistics")
     os.mkdir(emp_dir)
-    window_sizes = [1, 9, 19, 29, 39, 49, 59, 69, 99, 299, 499, emp_data.shape[-1]]
+    window_sizes = [1, 9, 19, 29, 39, 49, 59, 69, 79, 89, 99, 299, 499, emp_data.shape[-1]]
 
     for window_size in window_sizes:
         print_info(f"# window size = {window_size} ###############################################", results_dirname)
