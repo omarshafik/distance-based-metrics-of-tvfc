@@ -4,6 +4,7 @@ import os
 import numpy as np
 from scipy.stats import levene
 import tools
+from tools import print_info
 
 def analyze_between_subjects_ensemble_statistics(
     input_filenames: list,
@@ -14,6 +15,8 @@ def analyze_between_subjects_ensemble_statistics(
         results_dirname (str): parent directory name of the results
             (results will stored in a new subdirectory)
     """
+    print_info("##########################################################################", results_dirname)
+    print_info("INFO: analyzing between-subject ensemble statistics", results_dirname)
     between_subject_dir = os.path.join(results_dirname, "between-subjects-ensemble-statistics")
     os.mkdir(between_subject_dir)
 
@@ -22,9 +25,9 @@ def analyze_between_subjects_ensemble_statistics(
     random_file_indices = np.random.choice(len(input_filenames), number_of_subjects, replace=False)
     selected_subject_nums = [
         os.path.basename(input_filenames[subject_idx]) for subject_idx in random_file_indices]
-    print(f"INFO: Selected files {', '.join(selected_subject_nums)}")
+    print_info(f"INFO: Selected files {', '.join(selected_subject_nums)}", results_dirname)
     for window_size in window_sizes:
-        print(f"# window size = {window_size} ###############################################")
+        print_info(f"# window size = {window_size} ###############################################", results_dirname)
         means = []
         variances = []
         samples = []
@@ -59,5 +62,5 @@ def analyze_between_subjects_ensemble_statistics(
         between_variation = np.sum([(mean - np.mean(means)) ** 2 for mean in means])
         within_variation = np.sum(variances)
         f1_score = between_variation / within_variation
-        print(F"INFO: F1 score: {f1_score}")
-        print(F"INFO: Levene's statistics: {levene(*samples)}")
+        print_info(F"INFO: F1 score: {f1_score}", results_dirname)
+        print_info(F"INFO: Levene's statistics: {levene(*samples)}", results_dirname)

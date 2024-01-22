@@ -4,6 +4,7 @@ import os
 from itertools import combinations
 import numpy as np
 import tools
+from tools import print_info
 
 def analyze_surrogate_statistics(
     filename: str,
@@ -15,13 +16,15 @@ def analyze_surrogate_statistics(
         results_dirname (str): parent directory name of the results
             (results will stored in a new subdirectory)
     """
+    print_info("##########################################################################", results_dirname)
+    print_info("INFO: analyzing surrogate statistics", results_dirname)
     emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
     pairs = np.array(list(combinations(range(emp_data.shape[0]), 2)))
 
     # generate Surrogate data with the same frequency spectrum,
     # and autocorrelation as empirical
     noise = np.random.uniform(low=-np.pi, high=np.pi, size=emp_data.shape)
-    power_spectrum = np.mean(np.abs(np.fft.fft(emp_data, axis=-1)), axis=0)
+    power_spectrum = np.abs(np.fft.fft(emp_data, axis=-1))
     simulated_spectrum = power_spectrum \
         * np.exp(1j * noise)
     sc_data = np.fft.ifft(simulated_spectrum, axis=-1).real
@@ -36,12 +39,16 @@ def analyze_surrogate_statistics(
 
     # plot static Correlation matrices
     tools.plot_correlation_matrices(
-        [emp_data, sc_data],
-        ["Empirical Correlation", "SC Surrogate Correlation"],
+        [emp_data],
+        ["Empirical Correlation"],
+        out=os.path.join(surrogate_dir, "empirical-correlation-plots.png"))
+    tools.plot_correlation_matrices(
+        [sc_data],
+        ["SC Surrogate Correlation"],
         out=os.path.join(surrogate_dir, "SC-correlation-plots.png"))
     tools.plot_correlation_matrices(
-        [emp_data, scc_data],
-        ["Empirical Correlation", "SCC Surrogate Correlation"],
+        [scc_data],
+        ["SCC Surrogate Correlation"],
         out=os.path.join(surrogate_dir, "SCC-correlation-plots.png"))
 
     tools.plot_autocorrelation(
@@ -63,13 +70,16 @@ def analyze_surrogate_statistics(
         title="SCC Surrogate",
         out=os.path.join(surrogate_dir, "autcorrelation-SCC-surrogate.png"))
 
-    window_sizes = [9, 19, 29, 39, 49, 59, 69, 99, 299, 499, emp_data.shape[-1]]
+    window_sizes = [9, 19, 29, 39, 49, 59, 69, 79, 89, 99, 299, 499, emp_data.shape[-1]]
     for window_size in window_sizes:
-        print(f"# window size = {window_size} ####################################################")
+        print_info(f"# window size = {window_size} ####################################################", results_dirname)
         # Compute and plot SWD
         estimates_empirical = tools.swd(emp_data, window_size=window_size)
         estimates_sc = tools.swd(sc_data, window_size=window_size)
         estimates_scc = tools.swd(scc_data, window_size=window_size)
+
+        swc_empirical = tools.swc(emp_data, window_size=window_size)
+        swc_scc = tools.swc(scc_data, window_size=window_size)
 
         tools.plot_overlapping_distributions(
             [estimates_empirical, estimates_sc],
@@ -109,10 +119,26 @@ def analyze_surrogate_statistics(
                     f"edge-variance-distribution-{window_size}.png"
                 ))
 
+            swc_variance_empirical = np.var(swc_empirical, axis=-1)
+            swc_variance_scc = np.var(swc_scc, axis=-1)
+            tools.plot_overlapping_distributions(
+                [
+                    swc_variance_empirical,
+                    swc_variance_scc,
+                ],
+                ["Empirical", "SCC Surrogate"],
+                xlabel="Edge Variance (SWC)",
+                ylabel="Density",
+                title=f"w = {window_size}",
+                out=os.path.join(
+                    surrogate_dir,
+                    f"swc-variance-distribution-{window_size}.png"
+                ))
+
             estimates_significance = np.abs(tools.significant_estimates(estimates_empirical))
             total_significance_count = np.sum(estimates_significance)
             significance_rate = total_significance_count / np.size(estimates_significance)
-            print("INFO: total number of significant tvFC estimates (before filtering): " + \
+            print_info("INFO: total number of significant tvFC estimates (before filtering, results_dirname): " + \
                 f"{total_significance_count}, {significance_rate}")
 
             # Test time-averaged estimates null hypothesis (H1)
@@ -129,11 +155,11 @@ def analyze_surrogate_statistics(
             significance_rate_h1 = significance_count_h1 / np.size(estimates_significance)
             h1_type1_error_rate = \
                 (total_significance_count - significance_count_h1) / total_significance_count
-            print(f"INFO: significant edge count of H1: {np.sum(interest_edges_h1)}")
-            print("INFO: significant tvFC estimates count of H1 " + \
+            print_info(f"INFO: significant edge count of H1: {np.sum(interest_edges_h1)}", results_dirname)
+            print_info("INFO: significant tvFC estimates count of H1 " + \
                 "(time-averaged estimates' null): " + \
                 f"{significance_count_h1}, {significance_rate_h1}")
-            print(f"INFO: H1 type 1 error rate: {h1_type1_error_rate}")
+            print_info(f"INFO: H1 type 1 error rate: {h1_type1_error_rate}", results_dirname)
 
             # Test edge variance null hypothesis (H2)
             interest_edges_h2 = tools.get_edges_of_interest(
@@ -149,11 +175,11 @@ def analyze_surrogate_statistics(
             significance_rate_h2 = significance_count_h2 / np.size(estimates_significance)
             h2_type1_error_rate = \
                 (total_significance_count - significance_count_h2) / total_significance_count
-            print(f"INFO: significant edge count of H2 (w={window_size}): " + \
+            print_info(f"INFO: significant edge count of H2 (w={window_size}, results_dirname): " + \
                   f"{np.sum(interest_edges_h2)}")
-            print("INFO: significant tvFC estimates count of H2 (edge variance null): " + \
+            print_info("INFO: significant tvFC estimates count of H2 (edge variance null, results_dirname): " + \
                 f"{significance_count_h2}, {significance_rate_h2}")
-            print(f"INFO: H2 type 1 error rate (w={window_size}): {h2_type1_error_rate}")
+            print_info(f"INFO: H2 type 1 error rate (w={window_size}): {h2_type1_error_rate}", results_dirname)
 
             # find significantly variant/different tvFC estimates that belong to
             #   edges with significant statistics (time-averaged estimate or edge variance)
@@ -164,9 +190,10 @@ def analyze_surrogate_statistics(
             significance_rate_h1h2 = significance_count_h1h2 / np.size(estimates_significance)
             all_type1_error_rate = \
                 (total_significance_count - significance_count_h1h2) / total_significance_count
-            print(f"INFO: significant edge count of H1 & H2 (w={window_size}):" + \
+            print_info(f"INFO: significant edge count of H1 & H2 (w={window_size}, results_dirname):" + \
                 f" {np.sum(interest_edges_h1h2)}")
-            print("INFO: significant tvFC estimates count of H1 & H2: " + \
+            print_info("INFO: significant tvFC estimates count of H1 & H2: " + \
                 f"{significance_count_h1h2}, {significance_rate_h1h2}")
-            print(f"INFO: H1 & H2 type 1 error rate (w={window_size}): {all_type1_error_rate}")
+            print_info(f"INFO: H1 & H2 type 1 error rate (w={window_size}): {all_type1_error_rate}", results_dirname)
+
         # End of window size loop

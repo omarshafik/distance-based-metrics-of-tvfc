@@ -2,7 +2,13 @@
 imports module
 """
 from .analyze import *
-from .common import normalized, differenced, sliding_average, pad_timeseries, prep_emp_data
+from .common import (
+    normalized,
+    differenced,
+    sliding_average,
+    pad_timeseries,
+    prep_emp_data,
+    print_info)
 from .plot import (
     plot_distribution,
     plot_overlapping_distributions,

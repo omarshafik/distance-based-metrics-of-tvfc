@@ -4,6 +4,7 @@ import os
 from itertools import combinations
 import numpy as np
 import tools
+from tools import print_info
 
 def analyze_sample_statistics(
     filename: str,
@@ -15,6 +16,8 @@ def analyze_sample_statistics(
         results_dirname (str): parent directory name of the results
             (results will stored in a new subdirectory)
     """
+    print_info("##########################################################################", results_dirname)
+    print_info("INFO: analyzing within-subject sample statistics", results_dirname)
     emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
     pairs = np.array(list(combinations(range(emp_data.shape[0]), 2)))
     presentation_edges = np.random.choice(len(pairs), size=30, replace=False)
@@ -42,7 +45,7 @@ def analyze_sample_statistics(
         sample_stats_window_dir = os.path.join(sample_stats_dir, f"window-{window_size}")
         os.mkdir(sample_stats_window_dir)
 
-        print(f"# window size = {window_size} ####################################################")
+        print_info(f"# window size = {window_size} ####################################################", results_dirname)
         estimates_empirical = tools.swd(emp_data, window_size=window_size)
 
         estimates_significance = tools.significant_estimates(estimates_empirical)

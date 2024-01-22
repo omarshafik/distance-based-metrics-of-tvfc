@@ -4,6 +4,7 @@ import os
 import numpy as np
 import statsmodels.api as sm
 import tools
+from tools import print_info
 
 def analyze_within_subject_ensemble_statistics(
     filename: str,
@@ -16,6 +17,8 @@ def analyze_within_subject_ensemble_statistics(
         results_dirname (str): parent directory name of the results
             (results will stored in a new subdirectory)
     """
+    print_info("##########################################################################", results_dirname)
+    print_info("INFO: analyzing within-subject ensemble statistics", results_dirname)
     emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
 
     emp_dir = os.path.join(results_dirname, "within-subject-empirical-ensemble-statistics")
@@ -23,11 +26,11 @@ def analyze_within_subject_ensemble_statistics(
     window_sizes = [1, 9, 19, 29, 39, 49, 59, 69, 99, 299, 499, emp_data.shape[-1]]
 
     for window_size in window_sizes:
-        print(f"# window size = {window_size} ###############################################")
+        print_info(f"# window size = {window_size} ###############################################", results_dirname)
         # Compute and plot SWD
         swd_estimates = tools.swd(
             emp_data, window_size=window_size)
-        print("INFO: empirical SWD-based estimates mean, variance: " +
+        print_info("INFO: empirical SWD-based estimates mean, variance: " +
             f"{np.mean(swd_estimates), np.var(swd_estimates)}")
         tools.plot_distribution(
             swd_estimates,
@@ -68,7 +71,7 @@ def analyze_within_subject_ensemble_statistics(
         # compute and test the stationarity of SWD-based estimates' ensemble parameters
         mean_stationary_pval = sm.tsa.adfuller(np.mean(swd_estimates, axis=0))[1]
         var_stationary_pval = sm.tsa.adfuller(np.var(swd_estimates, axis=0))[1]
-        print("Stationarity (mean, variance): " + \
+        print_info("Stationarity (mean, variance, results_dirname): " + \
             f"({mean_stationary_pval}, {var_stationary_pval})")
         # End of window size loop
 
@@ -82,6 +85,8 @@ def analyze_within_subject_swd_swc_correlation(
         results_dirname (str): parent directory name of the results
             (results will stored in a new subdirectory)
     """
+    print_info("##########################################################################", results_dirname)
+    print_info("INFO: analyzing within-subject SWD-SWC correlation", results_dirname)
     emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
 
     emp_dir = os.path.join(results_dirname, "within-subject-empirical-ensemble-statistics")

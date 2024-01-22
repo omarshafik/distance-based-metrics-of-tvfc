@@ -1,6 +1,7 @@
 """
 common utility functions
 """
+import os
 import numpy as np
 
 def normalized(timeseries_array: np.ndarray, axis: int = -1) -> np.ndarray:
@@ -159,3 +160,15 @@ def prep_emp_data(emp_data, num_sessions = 4):
             emp_data_prepped = emp_session_data
 
     return emp_data_prepped
+
+def print_info(info_str: str, outdir: str = None):
+    """print_info to stdout and to a file
+
+    Args:
+        info_str (str): _description_
+    """
+    print(info_str)
+    if outdir is not None and os.path.exists(outdir):
+        log_filename = os.path.join(outdir, "info.log")
+        with open(log_filename, "a", encoding="utf-8") as logfile:
+            logfile.write(info_str)

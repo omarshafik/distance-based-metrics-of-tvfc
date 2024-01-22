@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 import numpy as np
 import procedures
+from tools import print_info
 
 TIMESTAMP = datetime.now().strftime('%Y%m%d%H%M%S')
 RANDOM_SEED = int(datetime.now().timestamp())
@@ -48,7 +49,8 @@ results_dir = os.path.join(outdir, TIMESTAMP)
 os.mkdir(results_dir)
 
 file_to_process = input_files[np.random.choice(len(input_files), size=1)[0]]
-print(f"INFO: Selected file {os.path.basename(file_to_process)}")
+print_info(f"INFO: randomization seed: {args.random_seed}", results_dir)
+print_info(f"INFO: Selected file {os.path.basename(file_to_process)}", results_dir)
 procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir)
 procedures.analyze_surrogate_statistics(file_to_process, results_dir)
 procedures.analyze_sample_statistics(file_to_process, results_dir)
