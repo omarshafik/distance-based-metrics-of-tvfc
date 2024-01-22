@@ -71,7 +71,7 @@ def analyze_within_subject_ensemble_statistics(
         # compute and test the stationarity of SWD-based estimates' ensemble parameters
         mean_stationary_pval = sm.tsa.adfuller(np.mean(swd_estimates, axis=0))[1]
         var_stationary_pval = sm.tsa.adfuller(np.var(swd_estimates, axis=0))[1]
-        print_info("Stationarity (mean, variance, results_dirname): " + \
+        print_info("Stationarity (mean, variance): " + \
             f"({mean_stationary_pval}, {var_stationary_pval})", results_dirname)
         # End of window size loop
 
