@@ -73,6 +73,8 @@ def analyze_within_subject_ensemble_statistics(
         var_stationary_pval = sm.tsa.adfuller(np.var(swd_estimates, axis=0))[1]
         print_info("Stationarity (mean, variance): " + \
             f"({mean_stationary_pval}, {var_stationary_pval})", results_dirname)
+        print_info("Distribution stats (skewness, kurtosis): " + \
+            f"{tools.test_distribution(swd_estimates)}", results_dirname)
         # End of window size loop
 
 def analyze_within_subject_swd_swc_correlation(

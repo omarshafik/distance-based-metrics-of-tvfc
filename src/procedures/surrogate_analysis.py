@@ -23,8 +23,8 @@ def analyze_surrogate_statistics(
 
     # generate Surrogate data with the same frequency spectrum,
     # and autocorrelation as empirical
-    noise = np.random.uniform(low=-np.pi, high=np.pi, size=emp_data.shape)
     power_spectrum = np.abs(np.fft.fft(emp_data, axis=-1))
+    noise = np.random.uniform(low=-np.pi, high=np.pi, size=emp_data.shape)
     simulated_spectrum = power_spectrum \
         * np.exp(1j * noise)
     sc_data = np.fft.ifft(simulated_spectrum, axis=-1).real
