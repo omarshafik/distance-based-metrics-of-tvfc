@@ -17,8 +17,8 @@ parser.add_argument('-i', '--indir', required=True, type=str,
     help='input fmri timeseries directory of files to process')
 parser.add_argument('-o', '--outdir', type=str,
     help='output directory location for saving analysis results. \
-        The default output directory for runnning FS study is the same directory of the input file. \
-        The default output directory for processing files is the $(CWD)/fs-results')
+        The default output directory for runnning the study is the same directory of the input file. \
+        The default output directory for processing files is the $(CWD)/swd-results')
 parser.add_argument('-s', '--random-seed', type=int, default=RANDOM_SEED,
     help='random seed to use')
 args = parser.parse_args()
