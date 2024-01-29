@@ -26,16 +26,8 @@ def analyze_sample_statistics(
 
     # generate Surrogate data with the same frequency spectrum,
     # and autocorrelation as empirical
-    white_noise = np.random.randn(*emp_data.shape)
-    power_spectrum = np.mean(np.abs(np.fft.fft(emp_data, axis=-1)), axis=0)
-    simulated_spectrum = power_spectrum \
-        * np.exp(1j * np.angle(np.fft.fft(white_noise, axis=-1)))
-    sc_data = np.fft.ifft(simulated_spectrum, axis=-1).real
-    emp_cov = np.cov(emp_data)
-    chol_decomposition = np.linalg.cholesky(emp_cov)
-    scc_data = np.dot(chol_decomposition, sc_data)
-    sc_data = tools.normalized(sc_data, axis=-1)
-    scc_data = tools.normalized(scc_data, axis=-1)
+    sc_data = tools.sc(emp_data)
+    scc_data = tools.laumann(emp_data)
 
     sample_stats_dir = os.path.join(results_dirname, "within-subject-sample-statistics-analysis")
     os.mkdir(sample_stats_dir)
@@ -48,9 +40,6 @@ def analyze_sample_statistics(
         print_info(f"# window size = {window_size} ####################################################", results_dirname)
         estimates_empirical = tools.swd(emp_data, window_size=window_size)
 
-        estimates_significance = tools.significant_estimates(estimates_empirical)
-        # only process selected presentation edges
-        estimates_significance = estimates_significance[presentation_edges]
         edges_of_interest = tools.get_edges_of_interest(
             emp_data,
             sc_data,
@@ -66,8 +55,16 @@ def analyze_sample_statistics(
             h2=True
         )
         edges_of_interest[edges_of_interest != 0] = 1
-        filtered_significance = (estimates_significance.T * edges_of_interest[presentation_edges]).T
-        significant_timepoints = tools.significant_time_points(filtered_significance, window_size)
+        insig_edge_indices = [
+            i for i, is_edge_significant in enumerate(edges_of_interest)
+            if not is_edge_significant]
+        estimates_significance = tools.significant_estimates(
+            estimates_empirical,
+            mean=np.mean(estimates_empirical[insig_edge_indices]),
+            std=np.std(estimates_empirical[insig_edge_indices]))
+        # only process selected presentation edges
+        estimates_significance = estimates_significance[presentation_edges]
+        significant_timepoints = tools.significant_time_points(estimates_significance, window_size)
 
         # pad estimates before plotting to match empirical data time dimension
         estimates_empirical = tools.pad_timeseries(estimates_empirical, window_size)

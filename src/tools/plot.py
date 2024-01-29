@@ -131,10 +131,15 @@ def plot_overlapping_distributions(
         out (str, optional): output file path to save the plot to. Defaults to None.
         bins (_type_, optional): bins to use for np.histogram. Defaults to None.
     """
-    _, ax = plt.subplots()
-    for elementidx, ts_element in enumerate(timeseries_list):
-        ax.hist(
-            ts_element.flatten(), bins='auto', density=density, alpha=0.5, label=labels[elementidx])
+    _, ax = plt.subplots(sharex=True, sharey=True)
+    # for elementidx, ts_element in enumerate(timeseries_list):
+    ax.hist(
+        [timeseries.flatten() for timeseries in timeseries_list],
+        bins='auto',
+        density=density,
+        alpha=0.5,
+        histtype="stepfilled",
+        label=labels)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
@@ -284,7 +289,7 @@ def plot_correlation_matrices(
         # Calculate the correlation matrix
         cov_matr = np.corrcoef(timeseries_list[i])
         # Display the correlation matrix with a more scientific colormap (diverging color map)
-        caxi = axi.matshow(cov_matr, cmap='coolwarm', vmin=-1, vmax=1)
+        caxi = axi.matshow(cov_matr, cmap='viridis', vmin=-1, vmax=1)
         # Add colorbar with a bit of padding for better aesthetics
         fig.colorbar(caxi, ax=axi, fraction=0.046, pad=0.04)
         # Set title with proper padding and font size for clarity

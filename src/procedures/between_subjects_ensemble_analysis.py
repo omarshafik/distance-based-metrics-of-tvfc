@@ -2,7 +2,7 @@
 """
 import os
 import numpy as np
-from scipy.stats import levene
+import scipy.stats as stats
 import tools
 from tools import print_info
 
@@ -62,5 +62,7 @@ def analyze_between_subjects_ensemble_statistics(
         between_variation = np.sum([(mean - np.mean(means)) ** 2 for mean in means])
         within_variation = np.sum(variances)
         f1_score = between_variation / within_variation
+        print_info(F"INFO: Levene's statistics: {stats.levene(*samples)}", results_dirname)
+        print_info(F"INFO: Flinger's statistics: {stats.fligner(*samples)}", results_dirname)
+        print_info(F"INFO: Bartlett's statistics: {stats.bartlett(*samples)}", results_dirname)
         print_info(F"INFO: F1 score: {f1_score}", results_dirname)
-        print_info(F"INFO: Levene's statistics: {levene(*samples)}", results_dirname)

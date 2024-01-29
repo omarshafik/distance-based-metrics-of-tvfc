@@ -88,7 +88,7 @@ def swd(
     transform = lambda x: np.emath.logn(10, x),
     return_distance: bool = False,
     safe_guard: int = 0,
-    kaiser_beta: int = 2,
+    kaiser_beta: int = 5,
     pairs: np.ndarray = None,
     **kwargs
 ) -> np.ndarray:
@@ -145,6 +145,7 @@ def swc(
     window_size: int = 5,
     window: callable = np.hamming,
     axis: int = -1,
+    fisher: bool = True,
     pairs: np.ndarray = None) -> np.ndarray:
     """ compute TVC estimate from fMRI signals using sliding window correlation
 
@@ -176,4 +177,6 @@ def swc(
             pairs = np.array(list(combinations(range(timeseries.shape[0]), 2)))
         corr_values = np.array([corr_values[:, i, j] for i, j in pairs])
 
+    if fisher:
+        return np.arctanh(corr_values)
     return corr_values

@@ -1,6 +1,7 @@
 """ Procedures of within-subject ensemble parameters analysis
 """
 import os
+from itertools import combinations
 import numpy as np
 import statsmodels.api as sm
 import tools
@@ -23,13 +24,12 @@ def analyze_within_subject_ensemble_statistics(
 
     emp_dir = os.path.join(results_dirname, "within-subject-empirical-ensemble-statistics")
     os.mkdir(emp_dir)
-    window_sizes = [1, 9, 19, 29, 39, 49, 59, 69, 79, 89, 99, 299, 499, emp_data.shape[-1]]
+    window_sizes = [1, 9, 19, 29, 39, 49, 59, 69, 79, 89, 99, emp_data.shape[-1]]
 
     for window_size in window_sizes:
         print_info(f"# window size = {window_size} ###############################################", results_dirname)
         # Compute and plot SWD
-        swd_estimates = tools.swd(
-            emp_data, window_size=window_size)
+        swd_estimates = tools.swd(emp_data, window_size=window_size)
         print_info("INFO: empirical SWD-based estimates mean, variance: " +
             f"{np.mean(swd_estimates), np.var(swd_estimates)}", results_dirname)
         tools.plot_distribution(
@@ -39,7 +39,21 @@ def analyze_within_subject_ensemble_statistics(
             title=f"SWD (w = {window_size})",
             out=os.path.join(
                 emp_dir,
-                f"empirical-swd-sampling-distribution-{window_size}.png"
+                f"swd-sampling-distribution-{window_size}.png"
+            ))
+
+        # Compute and plot SWD (no log transform)
+        swd_estimates_no_log = tools.swd(emp_data, window_size=window_size, return_distance=True)
+        print_info("INFO: empirical SWD-based (without transformation) estimates mean, variance: " +
+            f"{np.mean(swd_estimates_no_log), np.var(swd_estimates_no_log)}", results_dirname)
+        tools.plot_distribution(
+            swd_estimates_no_log,
+            xlabel="Estimate",
+            ylabel="Density",
+            title=f"SWD without Transformation (w = {window_size})",
+            out=os.path.join(
+                emp_dir,
+                f"swd-no-log-sampling-distribution-{window_size}.png"
             ))
 
         if window_size == 1:
@@ -54,7 +68,18 @@ def analyze_within_subject_ensemble_statistics(
             title=f"SWC (w = {window_size})",
             out=os.path.join(
                 emp_dir,
-                f"empirical-swc-sampling-distribution-{window_size}.png"))
+                f"swc-sampling-distribution-{window_size}.png"))
+
+        # Compute and plot SWC (no-fisher)
+        swc_estimates_no_fisher = tools.swc(emp_data, window_size=window_size, fisher=False)
+        tools.plot_distribution(
+            swc_estimates_no_fisher,
+            xlabel="Estimate",
+            ylabel="Density",
+            title=f"SWC without Transformation (w = {window_size})",
+            out=os.path.join(
+                emp_dir,
+                f"swc-no-fisher-sampling-distribution-{window_size}.png"))
 
         if window_size == emp_data.shape[-1]:
             continue
@@ -90,18 +115,19 @@ def analyze_within_subject_swd_swc_correlation(
     print_info("##########################################################################", results_dirname)
     print_info("INFO: analyzing within-subject SWD-SWC correlation", results_dirname)
     emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
+    pairs = np.array(list(combinations(range(emp_data.shape[0]), 2)))
 
     emp_dir = os.path.join(results_dirname, "within-subject-empirical-ensemble-statistics")
     if not os.path.exists(emp_dir):
         os.mkdir(emp_dir)
-    window_sizes = [1, 9, 19, 29, 39, 49, 59, 69, 99, 299, 499, emp_data.shape[-1]]
+    window_sizes = [1, 9, 19, 29, 39, 49, 59, 69, 99, emp_data.shape[-1]]
 
     swd_swc_correlations = []
     window_sizes = np.linspace(5, max(emp_data.shape[-1], 2400), 100)
     window_sizes = [int(window_size) for window_size in window_sizes]
     for window_size in window_sizes:
-        swd_estimates = tools.swd(emp_data, window_size)
-        swc_estimates = tools.swc(emp_data, window_size)
+        swd_estimates = tools.swd(emp_data, window_size, pairs=pairs)
+        swc_estimates = tools.swc(emp_data, window_size, pairs=pairs)
         swd_swc_correlations.append(
             np.corrcoef(swd_estimates.flatten(), swc_estimates.flatten())[0, 1])
 

@@ -26,3 +26,8 @@ from .test import (
     get_edges_of_interest,
     significant_estimates,
     significant_time_points)
+from .simulate import (
+    sc,
+    pr,
+    laumann
+)
