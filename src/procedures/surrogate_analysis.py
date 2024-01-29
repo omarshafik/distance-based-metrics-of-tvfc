@@ -134,7 +134,8 @@ def analyze_surrogate_statistics(
                 sc_data,
                 pairs,
                 window_size=window_size,
-                h1=True
+                h1=True,
+                metric=tvfc
             )
             estimates_significance_h1 = (
                 estimates_significance.T * interest_edges_h1).T
@@ -178,7 +179,8 @@ def analyze_surrogate_statistics(
                 scc_data,
                 pairs,
                 window_size=window_size,
-                h2=True
+                h2=True,
+                metric=tvfc
             )
             estimates_significance_h2 = (
                 estimates_significance.T * interest_edges_h2).T
@@ -359,6 +361,7 @@ def analyze_surrogate_statistics(
             #     pairs,
             #     window_size=window_size,
             #     h2=True,
+            #     metric=tvfc
             #     alpha=0.05
             # )
             # false_sig_edge_indices_h2 = [
