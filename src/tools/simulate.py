@@ -5,10 +5,10 @@ def sc(empirical_data):
     """_summary_
 
     Args:
-        empirical_data (_type_): _description_
+        empirical_data (any): empirical data
 
     Returns:
-        _type_: _description_
+        any: spectrally-constrained surrogate data
     """
     empirical_fft = np.fft.fft(empirical_data, axis=-1)
     empirical_fft_amplitude = np.abs(empirical_fft)
@@ -23,10 +23,10 @@ def pr(empirical_data):
     """_summary_
 
     Args:
-        empirical_data (_type_): _description_
+        empirical_data (any): empirical data
 
     Returns:
-        _type_: _description_
+        any: MVPR surrogate data
     """
     empirical_fft = np.fft.fft(empirical_data, axis=-1)
     empirical_fft_amplitude = np.abs(empirical_fft)
@@ -42,10 +42,10 @@ def laumann(empirical_data):
     """_summary_
 
     Args:
-        empirical_data (_type_): _description_
+        empirical_data (any): empirical data
 
     Returns:
-        _type_: _description_
+        any: Laumann's surrogate data
     """
     noise = np.random.uniform(low=-np.pi, high=np.pi, size=empirical_data.shape)
     power_spectrum = np.mean(np.abs(np.fft.fft(empirical_data, axis=-1)), axis=0)

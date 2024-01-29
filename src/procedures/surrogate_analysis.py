@@ -234,14 +234,6 @@ def analyze_surrogate_statistics(
             print_info(
                 f"INFO: H1 & H2 type 1 error rate (w={window_size}): {all_type1_error_rate}", results_dirname)
 
-            false_interest_edges_h2 = tools.get_edges_of_interest(
-                scc_data,
-                scc_data,
-                pairs,
-                window_size=window_size,
-                h2=True
-            )
-
             insig_edge_indices = [
                 i for i, is_edge_significant in enumerate(interest_edges_h1h2)
                 if not is_edge_significant]
@@ -253,9 +245,6 @@ def analyze_surrogate_statistics(
                 if is_edge_significant]
             sig_edge_indices_h1h2 = [
                 i for i, is_edge_significant in enumerate(interest_edges_h1h2)
-                if is_edge_significant]
-            false_sig_edge_indices_h2 = [
-                i for i, is_edge_significant in enumerate(false_interest_edges_h2)
                 if is_edge_significant]
             tools.plot_overlapping_distributions(
                 [
@@ -363,6 +352,18 @@ def analyze_surrogate_statistics(
                 out=os.path.join(
                     surrogate_dir,
                     f"h2-discriminability-distributions-{window_size}.png"))
+
+            # false_interest_edges_h2 = tools.get_edges_of_interest(
+            #     scc_data,
+            #     scc_data,
+            #     pairs,
+            #     window_size=window_size,
+            #     h2=True,
+            #     alpha=0.05
+            # )
+            # false_sig_edge_indices_h2 = [
+            #     i for i, is_edge_significant in enumerate(false_interest_edges_h2)
+            #     if is_edge_significant]
 
             # session_length = estimates_empirical.shape[-1] // 4
             # session_idx = np.random.choice(4)

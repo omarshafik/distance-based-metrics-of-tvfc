@@ -139,11 +139,11 @@ def prep_emp_data(emp_data, num_sessions = 4):
     """ prepare empirical data for tvFC processing
 
     Args:
-        emp_data (_type_): _description_
-        num_sessions (int, optional): _description_. Defaults to 4.
+        emp_data (any): empirical data
+        num_sessions (int, optional): number of sessions. Defaults to 4.
 
     Returns:
-        _type_: _description_
+        any: empirical data after normalizing and smoothing
     """
     session_length = int(emp_data.shape[-1] / num_sessions)
     emp_data_prepped = np.array([[]])
@@ -165,7 +165,7 @@ def print_info(info_str: str, outdir: str = None):
     """print_info to stdout and to a file
 
     Args:
-        info_str (str): _description_
+        info_str (str): string for output
     """
     print(info_str)
     if outdir is not None and os.path.exists(outdir):
