@@ -350,25 +350,31 @@ def analyze_surrogate_statistics(
                 f"{rate_discriminability_h2}", results_dirname)
             print_info(f"INFO: Significance rate disriminability index of H1 & H2 (w={window_size}): " + \
                 f"{rate_discriminability_h1h2}", results_dirname)
-            edge_discriminability_h1 = (np.sum(
-                edge_h1_significance_rate[edge_h1_significance_rate > 1]
-            ) + np.sum(
-                np.where(false_significance_rate[false_significance_rate < 1] > 1, 1, 0)
-            )) / (
+            edge_discriminability_h1 = (
+                (
+                    edge_h1_significance_rate[edge_h1_significance_rate > 1].shape[0]
+                ) + (
+                    false_significance_rate[false_significance_rate < 1].shape[0]
+                )
+            ) / (
                 edge_h1_significance_rate.shape[0] + false_significance_rate.shape[0]
             )
-            edge_discriminability_h2 = (np.sum(
-                edge_h2_significance_rate[edge_h2_significance_rate > 1]
-            ) + np.sum(
-                np.where(false_significance_rate[false_significance_rate < 1] > 1, 1, 0)
-            )) / (
+            edge_discriminability_h2 = (
+                (
+                    edge_h2_significance_rate[edge_h2_significance_rate > 1].shape[0]
+                ) + (
+                    false_significance_rate[false_significance_rate < 1].shape[0]
+                )
+            ) / (
                 edge_h2_significance_rate.shape[0] + false_significance_rate.shape[0]
             )
-            edge_discriminability_h1h2 = (np.sum(
-                edge_h1h2_significance_rate[edge_h1h2_significance_rate > 1]
-            ) + np.sum(
-                np.where(false_significance_rate[false_significance_rate < 1] > 1, 1, 0)
-            )) / (
+            edge_discriminability_h1h2 = (
+                (
+                    edge_h1h2_significance_rate[edge_h1h2_significance_rate > 1].shape[0]
+                ) + (
+                    false_significance_rate[false_significance_rate < 1].shape[0]
+                )
+            ) / (
                 edge_h1h2_significance_rate.shape[0] + false_significance_rate.shape[0]
             )
             print_info(f"INFO: Edge disriminability index of H1 (w={window_size}): " + \
