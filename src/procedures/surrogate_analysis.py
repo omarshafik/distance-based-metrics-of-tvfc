@@ -281,25 +281,41 @@ def analyze_surrogate_statistics(
             print_info(
                 f"INFO: Filtered type 1 error rate (w={window_size}): {type_1_error_rate}", results_dirname)
 
-            false_significance_count = np.sum(estimates_significance[insig_edge_indices], axis=-1)
-            edge_h1_significance_count = np.sum(estimates_significance[sig_edge_indices_h1], axis=-1)
-            edge_h2_significance_count = np.sum(estimates_significance[sig_edge_indices_h2], axis=-1)
-            edge_h1h2_significance_count = np.sum(estimates_significance[sig_edge_indices_h1h2], axis=-1)
-            false_count_upper_bound = np.percentile(false_significance_count, 95)
-            discriminability_index_h1 = np.sum(
-                edge_h1_significance_count[edge_h1_significance_count > false_count_upper_bound]
-            ) / np.sum(edge_h1_significance_count) * (
-                false_significance_count.shape[0] / estimates_significance.shape[0]
+            chance_significance_count_per_edge = total_significance_count / estimates_significance.shape[0]
+            false_significance_rate = np.sum(
+                estimates_significance[insig_edge_indices], axis=-1
+            ) / (
+                chance_significance_count_per_edge
             )
-            discriminability_index_h2 = np.sum(
-                edge_h2_significance_count[edge_h2_significance_count > false_count_upper_bound]
-            ) / np.sum(edge_h2_significance_count) * (
-                false_significance_count.shape[0] / estimates_significance.shape[0]
+            edge_h1_significance_rate = np.sum(
+                estimates_significance[sig_edge_indices_h1], axis=-1
+            ) / (
+                chance_significance_count_per_edge
             )
-            discriminability_index_h1h2 = np.sum(
-                edge_h1h2_significance_count[edge_h1h2_significance_count > false_count_upper_bound]
-            ) / np.sum(edge_h1h2_significance_count) * (
-                false_significance_count.shape[0] / estimates_significance.shape[0]
+            edge_h2_significance_rate = np.sum(
+                estimates_significance[sig_edge_indices_h2], axis=-1
+            ) / (
+                chance_significance_count_per_edge
+            )
+            edge_h1h2_significance_rate = np.sum(
+                estimates_significance[sig_edge_indices_h1h2], axis=-1
+            ) / (
+                chance_significance_count_per_edge
+            )
+            discriminability_index_h1 = (
+                np.median(edge_h1_significance_rate) - np.median(false_significance_rate)
+            ) / (
+                np.percentile(false_significance_rate, 75) - np.median(false_significance_rate)
+            )
+            discriminability_index_h2 = (
+                np.median(edge_h2_significance_rate) - np.median(false_significance_rate)
+            ) / (
+                np.percentile(false_significance_rate, 75) - np.median(false_significance_rate)
+            )
+            discriminability_index_h1h2 = (
+                np.median(edge_h1h2_significance_rate) - np.median(false_significance_rate)
+            ) / (
+                np.percentile(false_significance_rate, 75) - np.median(false_significance_rate)
             )
             print_info(f"INFO: Disriminability index of H1 (w={window_size}): " + \
                 f"{discriminability_index_h1}", results_dirname)
@@ -310,15 +326,15 @@ def analyze_surrogate_statistics(
 
             tools.plot_overlapping_distributions(
                 [
-                    edge_h1h2_significance_count,
-                    false_significance_count
+                    edge_h1h2_significance_rate,
+                    false_significance_rate
                 ],
                 [
 
                     "H1 & H2 Significant",
                     "H1 & H2 Insignificant",
                 ],
-                xlabel="Significance Count per Edge",
+                xlabel="Significance Rate per Edge",
                 ylabel="Density",
                 title=f"w = {window_size}",
                 out=os.path.join(
@@ -326,14 +342,14 @@ def analyze_surrogate_statistics(
                     f"h1h2-discriminability-distributions-{window_size}.png"))
             tools.plot_overlapping_distributions(
                 [
-                    edge_h1_significance_count,
-                    false_significance_count
+                    edge_h1_significance_rate,
+                    false_significance_rate
                 ],
                 [
                     "H1 Significant",
                     "H1 & H2 Insignificant",
                 ],
-                xlabel="Significance Count per Edge",
+                xlabel="Significance Rate per Edge",
                 ylabel="Density",
                 title=f"w = {window_size}",
                 out=os.path.join(
@@ -341,14 +357,14 @@ def analyze_surrogate_statistics(
                     f"h1-discriminability-distributions-{window_size}.png"))
             tools.plot_overlapping_distributions(
                 [
-                    edge_h2_significance_count,
-                    false_significance_count
+                    edge_h2_significance_rate,
+                    false_significance_rate
                 ],
                 [
                     "H2 Significant",
                     "H1 & H2 Insignificant",
                 ],
-                xlabel="Significance Count per Edge",
+                xlabel="Significance Rate per Edge",
                 ylabel="Density",
                 title=f"w = {window_size}",
                 out=os.path.join(
