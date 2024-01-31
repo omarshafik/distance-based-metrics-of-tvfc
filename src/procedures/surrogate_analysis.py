@@ -323,6 +323,33 @@ def analyze_surrogate_statistics(
                 f"{discriminability_index_h2}", results_dirname)
             print_info(f"INFO: Disriminability index of H1 & H2 (w={window_size}): " + \
                 f"{discriminability_index_h1h2}", results_dirname)
+            edge_discriminability_h1 = (np.sum(
+                edge_h1_significance_rate[edge_h1_significance_rate > 1]
+            ) + np.sum(
+                false_significance_rate[false_significance_rate < 1]
+            )) / (
+                np.sum(edge_h1_significance_rate) + np.sum(false_significance_rate)
+            )
+            edge_discriminability_h2 = (np.sum(
+                edge_h2_significance_rate[edge_h2_significance_rate > 1]
+            ) + np.sum(
+                false_significance_rate[false_significance_rate < 1]
+            )) / (
+                np.sum(edge_h2_significance_rate) + np.sum(false_significance_rate)
+            )
+            edge_discriminability_h1h2 = (np.sum(
+                edge_h1h2_significance_rate[edge_h1h2_significance_rate > 1]
+            ) + np.sum(
+                false_significance_rate[false_significance_rate < 1]
+            )) / (
+                np.sum(edge_h1h2_significance_rate) + np.sum(false_significance_rate)
+            )
+            print_info(f"INFO: Edge disriminability index of H1 (w={window_size}): " + \
+                f"{edge_discriminability_h1}", results_dirname)
+            print_info(f"INFO: Edge disriminability index of H2 (w={window_size}): " + \
+                f"{edge_discriminability_h2}", results_dirname)
+            print_info(f"INFO: Edge disriminability index of H1 & H2 (w={window_size}): " + \
+                f"{edge_discriminability_h1h2}", results_dirname)
 
             tools.plot_overlapping_distributions(
                 [
