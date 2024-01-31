@@ -180,3 +180,69 @@ def swc(
     if fisher:
         return np.arctanh(corr_values)
     return corr_values
+
+def mtd_no_parallel(
+    timeseries: np.ndarray,
+    window_size: int = 15,
+    kaiser_beta: int = 0,
+    pairs: np.ndarray = None) -> np.ndarray:
+    """ compute TVC estimate from fMRI signals using MTD approach
+
+    Args:
+        timeseries (np.ndarray): numpy array of time series of fMRI signals
+        window_size (int, optional): window size to use. Defaults to 15.
+        kaiser_beta (int, optional): \
+            parameter to use for applying the sliding average on pointwise MTD values. \
+            if the value is not zero, a tapered window is applied. See np.kaiser for more info \
+            Defaults to 0.
+        pairs (np.ndarray, optional): numpy array of indices of region pairs. Defaults to None.
+    Returns:
+        np.ndarray: numpy array of TVC estimates
+    """
+    if pairs is None:
+        # get an array of unique pair identifier, which will find out unique combinations of parcels
+        pairs = np.array(list(combinations(range(timeseries.shape[0]), 2)))
+
+    # Get distances between amplitudes
+    estimate = timeseries[pairs[:, 0]] * timeseries[pairs[:, 1]]
+
+    # get sliding window average (sample mean) values over the given window (sample) size
+    sampled_estimate = common.sliding_average(
+        estimate, window_size=window_size, kaiser_beta=kaiser_beta, pad=False)
+
+    return sampled_estimate
+
+
+def mtd(
+    timeseries: np.ndarray,
+    window_size: int = 15,
+    kaiser_beta: int = 5,
+    pairs: np.ndarray = None,
+    **kwargs
+) -> np.ndarray:
+    """ compute MTD-based tvFC estimates in parallel
+
+    Args:
+        timeseries (np.ndarray): numpy array of time series of fMRI signals
+        window_size (int, optional): window size to use. Defaults to 15.
+        kaiser_beta (int, optional): \
+            parameter to use for applying the sliding average on pointwise MTD values. \
+            if the value is not zero, a tapered window is applied. See np.kaiser for more info \
+            Defaults to 0.
+        pairs (np.ndarray, optional): numpy array of indices of region pairs. Defaults to None.
+    Returns:
+        np.ndarray: numpy array of TVC estimates
+    """
+    if pairs is None:
+        # get an array of unique pair identifier, which will find out unique combinations of parcels
+        pairs = np.array(list(combinations(range(timeseries.shape[0]), 2)))
+
+    timeseries = common.normalized(timeseries, axis=-1)
+    timeseries = common.differenced(timeseries, normalize=True, axis=-1)
+    return np.squeeze(Parallel()(
+        delayed(mtd_no_parallel)(
+            timeseries,
+            window_size=window_size,
+            kaiser_beta=kaiser_beta,
+            pairs=np.array([pair]),
+            **kwargs) for pair in pairs))

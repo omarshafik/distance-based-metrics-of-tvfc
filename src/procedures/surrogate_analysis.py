@@ -20,6 +20,8 @@ def analyze_surrogate_statistics(
     """
     if metric == "swc":
         tvfc = tools.swc
+    elif metric == "mtd":
+        tvfc = tools.mtd
     else:
         tvfc = tools.swd
 
@@ -399,7 +401,7 @@ def analyze_surrogate_statistics(
                 title=f"w = {window_size}",
                 out=os.path.join(
                     surrogate_dir,
-                    f"h1h2-discriminability-distributions-{window_size}.png"))
+                    f"discriminability-h1h2-distributions-{window_size}.png"))
             tools.plot_overlapping_distributions(
                 [
                     edge_h1_significance_rate,
@@ -414,7 +416,7 @@ def analyze_surrogate_statistics(
                 title=f"w = {window_size}",
                 out=os.path.join(
                     surrogate_dir,
-                    f"h1-discriminability-distributions-{window_size}.png"))
+                    f"discriminability-h1-distributions-{window_size}.png"))
             tools.plot_overlapping_distributions(
                 [
                     edge_h2_significance_rate,
@@ -429,7 +431,7 @@ def analyze_surrogate_statistics(
                 title=f"w = {window_size}",
                 out=os.path.join(
                     surrogate_dir,
-                    f"h2-discriminability-distributions-{window_size}.png"))
+                    f"discriminability-h2-distributions-{window_size}.png"))
 
             # false_interest_edges_h2 = tools.get_edges_of_interest(
             #     scc_data,
