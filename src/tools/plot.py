@@ -7,6 +7,7 @@ from scipy import stats
 import numpy as np
 from tools.common import find_segments
 
+PLOT = True
 plt.style.use('seaborn-v0_8-whitegrid')
 
 def plot_timeseries_and_estimates(
@@ -30,6 +31,8 @@ def plot_timeseries_and_estimates(
         out (str, optional): output file path to save the plot to. Defaults to None.
         yscale (_type_, optional): y-axis scale to apply for the stimates plot. Defaults to None.
     """
+    if not PLOT:
+        return
     plt.figure(figsize=(12, 6))
 
     plt.subplot(2, 1, 1)
@@ -88,6 +91,8 @@ def plot_distribution(
         out (str, optional): output file path to save the plot to. Defaults to None.
         bins (_type_, optional): bins to use for np.histogram. Defaults to None.
     """
+    if not PLOT:
+        return
     _, ax = plt.subplots()
     ax.hist(timeseries.flatten(), bins=bins, density=density)
 
@@ -131,6 +136,8 @@ def plot_overlapping_distributions(
         out (str, optional): output file path to save the plot to. Defaults to None.
         bins (_type_, optional): bins to use for np.histogram. Defaults to None.
     """
+    if not PLOT:
+        return
     _, ax = plt.subplots(sharex=True, sharey=True)
     # for elementidx, ts_element in enumerate(timeseries_list):
     ax.hist(
@@ -167,6 +174,8 @@ def plot_global_timeseries(
         title (str, optional): Defaults to "".
         out (str, optional): output file path to save the plot to. Defaults to None.
     """
+    if not PLOT:
+        return
     global_connectivity_ts = np.mean(timeseries, axis=0)
     plt.figure(figsize=(12, 6))
     plt.plot(global_connectivity_ts)
@@ -198,6 +207,8 @@ def plot_grid(
         ylabel (str, optional): Defaults to "".
         title (str, optional): Defaults to "".
     """
+    if not PLOT:
+        return
     plt.plot(x_array.flatten(), y_array.flatten())
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -227,6 +238,8 @@ def plot_autocorrelation(
         ylabel (str, optional): Defaults to "".
         title (str, optional): Defaults to "".
     """
+    if not PLOT:
+        return
     # Plot autocovariance
     acf_values = np.zeros((time_series.shape[0], max_lag))
     for i in range(time_series.shape[0]):
@@ -256,6 +269,8 @@ def plot_qq(timeseries: np.ndarray, title: str = "", out: str = None):
         title (str, optional): Defaults to ""
         out (str, optional): output file path to save the plot to. Defaults to None.
     """
+    if not PLOT:
+        return
     plt.figure(figsize=(6, 6))
     stats.probplot(timeseries.flatten(), plot=plt)
     plt.title(title)
@@ -277,6 +292,8 @@ def plot_correlation_matrices(
         title (str, optional): Defaults to "".
         out (str, optional): output file path to save the plot to. Defaults to None.
     """
+    if not PLOT:
+        return
     ntimeseries = len(timeseries_list)
     # Define figure and axes with increased figure size and appropriate spacing
     fig, ax_list = plt.subplots(

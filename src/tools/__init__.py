@@ -25,7 +25,11 @@ from .test import (
     test_identical_distribution,
     get_edges_of_interest,
     significant_estimates,
-    significant_time_points)
+    significant_time_points,
+    scaled_significance_rate,
+    sdv,
+    sdr,
+    edr)
 from .simulate import (
     sc,
     pr,

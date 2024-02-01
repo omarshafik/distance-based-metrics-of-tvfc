@@ -3,21 +3,46 @@
 import os
 from itertools import combinations
 import numpy as np
+import pandas as pd
+from scipy import stats
 import tools
 from tools import print_info
 
 
 def analyze_surrogate_statistics(
-        filename: str,
+        data: str | np.ndarray,
         results_dirname: str,
-        metric: str = "swd"):
+        metric: str = "swd",
+        filename: str = None,
+        sc_data: np.ndarray = None,
+        scc_data: np.ndarray = None,
+        pairs: np.ndarray = None,
+        window_sizes: np.ndarray = None,
+        plot: bool = True,
+        results: dict = None):
     """ run procedures for analyzing empirical against surrogate statistics of given metric
 
     Args:
-        filename (str): filename to use
+        data (str | np.ndarray): filename to use or the data itself
         results_dirname (str): parent directory name of the results
             (results will stored in a new subdirectory)
     """
+    tools.plot.PLOT = plot
+    if results is None:
+        results = {
+            'filename': [],
+            'metric': [],
+            'window_size': [],
+            'sdv_h1': [],
+            'sdv_h2': [],
+            'sdv_h1h2': [],
+            'sdr_h1': [],
+            'sdr_h2': [],
+            'sdr_h1h2': [],
+            'edr_h1': [],
+            'edr_h2': [],
+            'edr_h1h2': [],
+        }
     if metric == "swc":
         tvfc = tools.swc
     elif metric == "mtd":
@@ -28,17 +53,26 @@ def analyze_surrogate_statistics(
     print_info(
         "##########################################################################", results_dirname)
     print_info(f"INFO: analyzing {metric.upper()} surrogate statistics", results_dirname)
-    emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
-    pairs = np.array(list(combinations(range(emp_data.shape[0]), 2)))
+    if isinstance(data, str):
+        emp_data = tools.prep_emp_data(np.loadtxt(data).T)
+    else:
+        emp_data = data
+    
+    if pairs is None:
+        pairs = np.array(list(combinations(range(emp_data.shape[0]), 2)))
 
     # generate Surrogate data with the same frequency spectrum,
     # and autocorrelation as empirical
+    if sc_data is None:
+        sc_data = tools.sc(emp_data)
     
-    sc_data = tools.sc(emp_data)
-    scc_data = tools.laumann(emp_data)
+    if scc_data is None:
+        scc_data = tools.laumann(emp_data)
+
 
     surrogate_dir = os.path.join(results_dirname, f"{metric}-surrogate-analysis")
-    os.mkdir(surrogate_dir)
+    if plot:
+        os.mkdir(surrogate_dir)
 
     # plot static Correlation matrices
     tools.plot_correlation_matrices(
@@ -73,16 +107,19 @@ def analyze_surrogate_statistics(
         title="SCC Surrogate",
         out=os.path.join(surrogate_dir, "autcorrelation-SCC-surrogate.png"))
 
+    timeavg_estimates_empirical = tvfc(emp_data, emp_data.shape[-1], pairs=pairs)
+    timeavg_estimates_sc = tvfc(sc_data, sc_data.shape[-1], pairs=pairs)
 
-    window_sizes = [9, 19, 29, 39, 49, 59, 69,
-                    79, 89, 99, emp_data.shape[-1]]
+    if window_sizes is None:
+        window_sizes = [9, 19, 29, 39, 49, 59, 69,
+                        79, 89, 99, emp_data.shape[-1]]
     for window_size in window_sizes:
         print_info(
             f"# window size = {window_size} ####################################################", results_dirname)
         # Compute and plot tvFC estimates
-        estimates_empirical = tvfc(emp_data, window_size=window_size)
-        estimates_sc = tvfc(sc_data, window_size=window_size)
-        estimates_scc = tvfc(scc_data, window_size=window_size)
+        estimates_empirical = tvfc(emp_data, window_size=window_size, pairs=pairs)
+        estimates_sc = tvfc(sc_data, window_size=window_size, pairs=pairs)
+        estimates_scc = tvfc(scc_data, window_size=window_size, pairs=pairs)
 
         tools.plot_overlapping_distributions(
             [estimates_empirical, estimates_sc],
@@ -106,6 +143,9 @@ def analyze_surrogate_statistics(
             ))
 
         if window_size > 1 and window_size < 100:
+            results['window_size'].append(window_size)
+            results['metric'].append(metric)
+            results['filename'].append(filename)
             edge_variance_empirical = np.var(estimates_empirical, axis=-1)
             edge_variance_scc = np.var(estimates_scc, axis=-1)
             tools.plot_overlapping_distributions(
@@ -132,12 +172,8 @@ def analyze_surrogate_statistics(
 
             # Test time-averaged estimates null hypothesis (H1)
             interest_edges_h1 = tools.get_edges_of_interest(
-                emp_data,
-                sc_data,
-                pairs,
-                window_size=window_size,
-                h1=True,
-                metric=tvfc
+                timeavg_estimates_empirical,
+                timeavg_estimates_sc
             )
             estimates_significance_h1 = (
                 estimates_significance.T * interest_edges_h1).T
@@ -172,17 +208,14 @@ def analyze_surrogate_statistics(
                 title=f"w = {window_size}",
                 out=os.path.join(
                     surrogate_dir,
-                    f"h1-filtered-overlapping-distributions-{window_size}.png"
+                    f"filtered-h1-overlapping-distributions-{window_size}.png"
                 ))
 
             # Test edge variance null hypothesis (H2)
             interest_edges_h2 = tools.get_edges_of_interest(
-                emp_data,
-                scc_data,
-                pairs,
-                window_size=window_size,
-                h2=True,
-                metric=tvfc
+                edge_variance_empirical,
+                edge_variance_scc,
+                one_side=True
             )
             estimates_significance_h2 = (
                 estimates_significance.T * interest_edges_h2).T
@@ -216,7 +249,7 @@ def analyze_surrogate_statistics(
                 title=f"w = {window_size}",
                 out=os.path.join(
                     surrogate_dir,
-                    f"h2-filtered-overlapping-distributions-{window_size}.png"
+                    f"filtered-h2-overlapping-distributions-{window_size}.png"
                 ))
 
             # find significantly variant/different tvFC estimates that belong to
@@ -264,8 +297,25 @@ def analyze_surrogate_statistics(
                 title=f"w = {window_size}",
                 out=os.path.join(
                     surrogate_dir,
-                    f"h1h2-filtered-overlapping-distributions-{window_size}.png"
+                    f"filtered-h1h2-overlapping-distributions-{window_size}.png"
                 ))
+
+            sc_significance = np.abs(tools.significant_estimates(
+                sc_data,
+                mean=np.mean(estimates_empirical[insig_edge_indices]),
+                std=np.std(estimates_empirical[insig_edge_indices])))
+            sc_significance_rate = tools.scaled_significance_rate(
+                sc_significance,
+                list(range(sc_significance.shape[0]))
+            )
+            tools.plot_distribution(
+                sc_significance_rate,
+                xlabel="Significance Rate per Edge",
+                ylabel="Density",
+                title=f"w = {window_size}",
+                out=os.path.join(
+                    surrogate_dir,
+                    f"discriminability-sc-distributions-{window_size}.png"))
 
             estimates_significance = np.abs(tools.significant_estimates(
                 estimates_empirical,
@@ -283,108 +333,86 @@ def analyze_surrogate_statistics(
             print_info(
                 f"INFO: Filtered type 1 error rate (w={window_size}): {type_1_error_rate}", results_dirname)
 
-            chance_significance_count_per_edge = total_significance_count / estimates_significance.shape[0]
-            false_significance_rate = np.sum(
-                estimates_significance[insig_edge_indices], axis=-1
-            ) / (
-                chance_significance_count_per_edge
+            false_significance_rate = tools.scaled_significance_rate(
+                estimates_significance,
+                insig_edge_indices
             )
-            edge_h1_significance_rate = np.sum(
-                estimates_significance[sig_edge_indices_h1], axis=-1
-            ) / (
-                chance_significance_count_per_edge
+            edge_h1_significance_rate = tools.scaled_significance_rate(
+                estimates_significance,
+                sig_edge_indices_h1
             )
-            edge_h2_significance_rate = np.sum(
-                estimates_significance[sig_edge_indices_h2], axis=-1
-            ) / (
-                chance_significance_count_per_edge
+            edge_h2_significance_rate = tools.scaled_significance_rate(
+                estimates_significance,
+                sig_edge_indices_h2
             )
-            edge_h1h2_significance_rate = np.sum(
-                estimates_significance[sig_edge_indices_h1h2], axis=-1
-            ) / (
-                chance_significance_count_per_edge
+            edge_h1h2_significance_rate = tools.scaled_significance_rate(
+                estimates_significance,
+                sig_edge_indices_h1h2
             )
-            discriminability_index_h1 = (
-                np.median(edge_h1_significance_rate) - np.median(false_significance_rate)
-            ) / (
-                np.percentile(false_significance_rate, 75) - np.median(false_significance_rate)
+
+            sdv_h1 = tools.sdv(
+                edge_h1_significance_rate,
+                false_significance_rate
             )
-            discriminability_index_h2 = (
-                np.median(edge_h2_significance_rate) - np.median(false_significance_rate)
-            ) / (
-                np.percentile(false_significance_rate, 75) - np.median(false_significance_rate)
+            sdv_h2 = tools.sdv(
+                edge_h2_significance_rate,
+                false_significance_rate
             )
-            discriminability_index_h1h2 = (
-                np.median(edge_h1h2_significance_rate) - np.median(false_significance_rate)
-            ) / (
-                np.percentile(false_significance_rate, 75) - np.median(false_significance_rate)
+            sdv_h1h2 = tools.sdv(
+                edge_h1h2_significance_rate,
+                false_significance_rate
             )
             print_info(f"INFO: Disriminability index of H1 (w={window_size}): " + \
-                f"{discriminability_index_h1}", results_dirname)
+                f"{sdv_h1}", results_dirname)
             print_info(f"INFO: Disriminability index of H2 (w={window_size}): " + \
-                f"{discriminability_index_h2}", results_dirname)
+                f"{sdv_h2}", results_dirname)
             print_info(f"INFO: Disriminability index of H1 & H2 (w={window_size}): " + \
-                f"{discriminability_index_h1h2}", results_dirname)
-            rate_discriminability_h1 = (np.sum(
-                edge_h1_significance_rate[edge_h1_significance_rate > 1]
-            ) + np.sum(
-                false_significance_rate[false_significance_rate < 1]
-            )) / (
-                np.sum(edge_h1_significance_rate) + np.sum(false_significance_rate)
+                f"{sdv_h1h2}", results_dirname)
+            results["sdv_h1"].append(sdv_h1)
+            results["sdv_h2"].append(sdv_h2)
+            results["sdv_h1h2"].append(sdv_h1h2)
+            sdr_h1 = tools.sdr(
+                edge_h1_significance_rate,
+                false_significance_rate
             )
-            rate_discriminability_h2 = (np.sum(
-                edge_h2_significance_rate[edge_h2_significance_rate > 1]
-            ) + np.sum(
-                false_significance_rate[false_significance_rate < 1]
-            )) / (
-                np.sum(edge_h2_significance_rate) + np.sum(false_significance_rate)
+            sdr_h2 = tools.sdr(
+                edge_h2_significance_rate,
+                false_significance_rate
             )
-            rate_discriminability_h1h2 = (np.sum(
-                edge_h1h2_significance_rate[edge_h1h2_significance_rate > 1]
-            ) + np.sum(
-                false_significance_rate[false_significance_rate < 1]
-            )) / (
-                np.sum(edge_h1h2_significance_rate) + np.sum(false_significance_rate)
+            sdr_h1h2 =  tools.sdr(
+                edge_h1h2_significance_rate,
+                false_significance_rate
             )
             print_info(f"INFO: Significance rate disriminability index of H1 (w={window_size}): " + \
-                f"{rate_discriminability_h1}", results_dirname)
+                f"{sdr_h1}", results_dirname)
             print_info(f"INFO: Significance rate disriminability index of H2 (w={window_size}): " + \
-                f"{rate_discriminability_h2}", results_dirname)
+                f"{sdr_h2}", results_dirname)
             print_info(f"INFO: Significance rate disriminability index of H1 & H2 (w={window_size}): " + \
-                f"{rate_discriminability_h1h2}", results_dirname)
-            edge_discriminability_h1 = (
-                (
-                    edge_h1_significance_rate[edge_h1_significance_rate > 1].shape[0]
-                ) + (
-                    false_significance_rate[false_significance_rate < 1].shape[0]
-                )
-            ) / (
-                edge_h1_significance_rate.shape[0] + false_significance_rate.shape[0]
+                f"{sdr_h1h2}", results_dirname)
+            results["sdr_h1"].append(sdr_h1)
+            results["sdr_h2"].append(sdr_h2)
+            results["sdr_h1h2"].append(sdr_h1h2)
+            edr_h1 = tools.edr(
+                edge_h1_significance_rate,
+                false_significance_rate
             )
-            edge_discriminability_h2 = (
-                (
-                    edge_h2_significance_rate[edge_h2_significance_rate > 1].shape[0]
-                ) + (
-                    false_significance_rate[false_significance_rate < 1].shape[0]
-                )
-            ) / (
-                edge_h2_significance_rate.shape[0] + false_significance_rate.shape[0]
+            edr_h2 = tools.edr(
+                edge_h2_significance_rate,
+                false_significance_rate
             )
-            edge_discriminability_h1h2 = (
-                (
-                    edge_h1h2_significance_rate[edge_h1h2_significance_rate > 1].shape[0]
-                ) + (
-                    false_significance_rate[false_significance_rate < 1].shape[0]
-                )
-            ) / (
-                edge_h1h2_significance_rate.shape[0] + false_significance_rate.shape[0]
+            edr_h1h2 =  tools.edr(
+                edge_h1h2_significance_rate,
+                false_significance_rate
             )
             print_info(f"INFO: Edge disriminability index of H1 (w={window_size}): " + \
-                f"{edge_discriminability_h1}", results_dirname)
+                f"{edr_h1}", results_dirname)
             print_info(f"INFO: Edge disriminability index of H2 (w={window_size}): " + \
-                f"{edge_discriminability_h2}", results_dirname)
+                f"{edr_h2}", results_dirname)
             print_info(f"INFO: Edge disriminability index of H1 & H2 (w={window_size}): " + \
-                f"{edge_discriminability_h1h2}", results_dirname)
+                f"{edr_h1h2}", results_dirname)
+            results["edr_h1"].append(edr_h1)
+            results["edr_h2"].append(edr_h2)
+            results["edr_h1h2"].append(edr_h1h2)
 
             tools.plot_overlapping_distributions(
                 [
@@ -468,3 +496,73 @@ def analyze_surrogate_statistics(
             #     f"INFO: False trend-nonstationarity rate (w={window_size}): {false_stationarity_rate}", results_dirname)
 
         # End of window size loop
+    return results
+
+def evaluate_tvfc_metrics(
+    input_filenames: str,
+    results_dirname: str,
+    metrics: list = None):
+    """_summary_
+
+    Args:
+        input_filenames (str): _description_
+        results_dirname (str): _description_
+        metrics (list, optional): _description_. Defaults to ["mtd", "swc", "swd"].
+    """
+    if metrics is None:
+        metrics = ["mtd", "swc", "swd"]
+
+    results = {
+        'filename': [],
+        'metric': [],
+        'window_size': [],
+        'sdv_h1': [],
+        'sdv_h2': [],
+        'sdv_h1h2': [],
+        'sdr_h1': [],
+        'sdr_h2': [],
+        'sdr_h1h2': [],
+        'edr_h1': [],
+        'edr_h2': [],
+        'edr_h1h2': [],
+    }
+
+    evaluation_dir = os.path.join(results_dirname, "metrics-evaluation-analysis")
+    os.mkdir(evaluation_dir)
+
+    print_info(
+        "##########################################################################", results_dirname)
+    print_info("INFO: Caryying out tvFC metrics evaluation analysis", results_dirname)
+
+    number_of_subjects = 20
+    random_file_indices = np.random.choice(len(input_filenames), number_of_subjects, replace=False)
+    selected_subject_nums = [
+        os.path.basename(input_filenames[subject_idx]) for subject_idx in random_file_indices]
+    print_info(f"INFO: Selected files {', '.join(selected_subject_nums)}", results_dirname)
+
+    for fileidx in random_file_indices:
+        filename = input_filenames[fileidx]
+        emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
+        pairs = np.array(list(combinations(range(emp_data.shape[0]), 2)))
+
+        # generate Surrogate data with the same frequency spectrum,
+        # autocorrelation, cross-frequency as empirical
+        sc_data = tools.sc(emp_data)
+        scc_data = tools.laumann(emp_data)
+        for metric in metrics:
+            analyze_surrogate_statistics(
+                emp_data,
+                results_dirname,
+                metric=metric,
+                sc_data=sc_data,
+                scc_data=scc_data,
+                pairs=pairs,
+                plot=False,
+                filename=os.path.basename(filename),
+                results=results
+            )
+
+    pd.DataFrame(results).to_csv(
+        os.path.join(evaluation_dir, "discriminability.csv"),
+        index=False
+    )

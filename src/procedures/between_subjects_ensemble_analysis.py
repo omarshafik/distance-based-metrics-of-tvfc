@@ -21,7 +21,7 @@ def analyze_between_subjects_ensemble_statistics(
     os.mkdir(between_subject_dir)
 
     window_sizes = [9, 19, 29, 39, 49, 59, 69]
-    number_of_subjects = 100
+    number_of_subjects = 30
     random_file_indices = np.random.choice(len(input_filenames), number_of_subjects, replace=False)
     selected_subject_nums = [
         os.path.basename(input_filenames[subject_idx]) for subject_idx in random_file_indices]

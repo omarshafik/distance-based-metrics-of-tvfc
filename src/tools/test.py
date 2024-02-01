@@ -90,56 +90,28 @@ def test_identical_distribution(timeseries: np.ndarray, nrefs: int = 30) -> int:
     return np.sum(ks_pvalues < 0.05) / len(ks_pvalues)
 
 def get_edges_of_interest(
-    empirical_data: np.ndarray,
-    null_data: np.ndarray,
-    pairs: np.ndarray,
-    window_size: int = None,
+    empirical_measures: np.ndarray,
+    surrogate_measures: np.ndarray,
     alpha: float = 0.0001,
-    h1: bool = False,
-    h2: bool = False,
-    metric: callable = swd
+    one_side: bool = False
 ) -> int:
     """get edges that exhibit properties beyond given surrogate.
 
     Args:
-        empirical_data (np.ndarray): empirical data
-        null_data (np.ndarray): surrogate data
-        pairs (np.ndarray): order of pairing for empirical time series. \
-            An array of region indices used to compute and return statistics.
-        window_size (int, optional): Window/sample size to use. Defaults to None.\
-            This must be given, when variance test is needed
+        empirical_measures (np.ndarray): empirical measures.
+        surrogate_measures (np.ndarray): surrogate measures.
         alpha (float, optional): significance level to use. Defaults to 0.05.
-        h1 (bool, optional): Test the time-average estimate null hypothesis (H1)
-        h2 (bool, optional): Test the edge variance null hypothesis (H2)
+        one_side (bool, optional): carry out one-side hypothesis testing. Defaults to False.
     """
-    num_parcels = empirical_data.shape[0]
-    edges_of_interest = np.zeros(int((num_parcels * (num_parcels - 1)) / 2), dtype=int)
-    if h1:
-        time_avg_estimates_empirical = metric(
-            empirical_data, window_size=empirical_data.shape[-1], pairs=pairs)
-        time_avg_estimates_surrogate = metric(
-            null_data, window_size=empirical_data.shape[-1])
-
-        time_avg_lower_bound, time_avg_higher_bound = stats.norm.interval(
-            (1 - alpha),
-            loc=np.mean(time_avg_estimates_surrogate),
-            scale=np.std(time_avg_estimates_surrogate))
-        edges_of_interest = np.where(time_avg_estimates_empirical < time_avg_lower_bound, 1, 0)
-        edges_of_interest += np.where(time_avg_estimates_empirical > time_avg_higher_bound, 1, 0)
-
-    if h2 and window_size is not None:
-        estimates_empirical = metric(
-            empirical_data, window_size=window_size, pairs=pairs)
-        estimates_surrogate = metric(
-            null_data, window_size=window_size)
-
-        edge_variance_empirical = np.var(estimates_empirical, -1)
-        surrogate_variance = np.var(estimates_surrogate, -1)
-        variance_higher_bound = np.percentile(surrogate_variance, 100 * (1 - alpha))
+    edges_of_interest = np.zeros(empirical_measures.shape[0], dtype=int)
+    if not one_side:
+        alpha = alpha / 2
+        lower_bound = np.percentile(surrogate_measures, 100 * alpha)
         edges_of_interest += np.where(
-            edge_variance_empirical > variance_higher_bound, 1, 0)
-
-    edges_of_interest[edges_of_interest != 0] = 1
+            empirical_measures < lower_bound, 1, 0)
+    upper_bound = np.percentile(surrogate_measures, 100 * (1 - alpha))
+    edges_of_interest += np.where(
+        empirical_measures > upper_bound, 1, 0)
     return edges_of_interest
 
 def significant_estimates(
@@ -208,3 +180,111 @@ def significant_time_points(
                         mode='constant',
                         constant_values=0)
     return result_arr
+
+def scaled_significance_rate(
+    significance_array: np.ndarray,
+    indices: list):
+    """get the significance rate of given indices normalized by the chance rate
+
+    Args:
+        significance_array (np.ndarray): array of significance, with values \
+            either 0 (null) or 1 (significant)
+        indices (list): indices for edges of interest
+
+    Returns:
+        float: normalized significance rate
+    """
+    chance_significance_count_per_edge = np.sum(significance_array) / significance_array.shape[0]
+    rate = np.sum(
+        significance_array[indices], axis=-1
+    ) / (
+        chance_significance_count_per_edge
+    )
+    return rate
+
+def sdv(
+    significance_rate_of_interest: float,
+    false_significance_rate: float):
+    """get the significance rate discriminability (SRD) variance (non-parametric)
+
+    Args:
+        significance_rate_of_interet (float): significance rate of interest edges
+        false_significance_rate (float): significance rate of null edges
+
+    Returns:
+        float: the significance rate discriminability variance (SRD variance)
+    """
+    statistic = (
+        np.median(significance_rate_of_interest) - np.median(false_significance_rate)
+    ) / (
+        np.percentile(false_significance_rate, 75) - np.median(false_significance_rate)
+    )
+    return statistic
+
+def sdr(
+    significance_rate_of_interest: float,
+    false_significance_rate: float,
+    null_distribution: np.ndarray = None,
+    alpha: float = 0.05):
+    """get the significance rate discriminability (SRD) rate
+
+    Args:
+        significance_rate_of_interet (float): significance rate of interest edges
+        false_significance_rate (float): significance rate of null edges
+
+    Returns:
+        float: the significance rate discriminability rate (SRD rate)
+    """
+    null_rate_upper_bound = 1
+    null_rate_lower_bound = 1
+    if null_distribution is not None:
+        null_rate_upper_bound, null_rate_lower_bound = stats.norm.interval(
+            (1 - alpha),
+            loc=np.mean(null_distribution),
+            scale=np.std(null_distribution)
+        )
+
+    statistic = (
+        np.sum(
+            significance_rate_of_interest[significance_rate_of_interest > null_rate_upper_bound]
+        ) + np.sum(
+            false_significance_rate[false_significance_rate < null_rate_lower_bound]
+        )
+    ) / (
+        np.sum(significance_rate_of_interest) + np.sum(false_significance_rate)
+    )
+    return statistic
+
+def edr(
+    significance_rate_of_interest: float,
+    false_significance_rate: float,
+    null_distribution: np.ndarray = None,
+    alpha: float = 0.05):
+    """get the Edge discriminability (ED) rate
+
+    Args:
+        significance_rate_of_interet (float): significance rate of interest edges
+        false_significance_rate (float): significance rate of null edges
+
+    Returns:
+        float: the edge discriminability rate (SRD rate)
+    """
+    null_rate_upper_bound = 1
+    null_rate_lower_bound = 1
+    if null_distribution is not None:
+        null_rate_upper_bound, null_rate_lower_bound = stats.norm.interval(
+            (1 - alpha),
+            loc=np.mean(null_distribution),
+            scale=np.std(null_distribution)
+        )
+
+    statistic = (
+        (
+            significance_rate_of_interest[significance_rate_of_interest > null_rate_upper_bound].shape[0]
+        ) + (
+            false_significance_rate[false_significance_rate < null_rate_lower_bound].shape[0]
+        )
+    ) / (
+        significance_rate_of_interest.shape[0] + false_significance_rate.shape[0]
+    )
+    return statistic
