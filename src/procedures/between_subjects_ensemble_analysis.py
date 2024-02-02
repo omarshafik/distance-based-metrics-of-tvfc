@@ -40,7 +40,8 @@ def analyze_between_subjects_ensemble_statistics(
         n = 0
         for fileidx in random_file_indices:
             emp_data = tools.prep_emp_data(np.loadtxt(input_filenames[fileidx]).T)
-            emp_data = emp_data[:, 2000:2500]
+            session_length = emp_data.shape[-1] // 4
+            emp_data = emp_data[:, 0:session_length]
             estimates_empirical = tools.swd(emp_data, window_size=window_size)
             n += estimates_empirical.shape[-1]
             edgeavg_means = np.mean(estimates_empirical, axis=0)
