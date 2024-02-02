@@ -29,6 +29,9 @@ def analyze_sample_statistics(
     sc_data = tools.sc(emp_data)
     scc_data = tools.laumann(emp_data)
 
+    timeavg_estimates_empirical = tools.swd(emp_data, emp_data.shape[-1], pairs=pairs)
+    timeavg_estimates_sc = tools.swd(sc_data, sc_data.shape[-1], pairs=pairs)
+
     sample_stats_dir = os.path.join(results_dirname, "within-subject-sample-statistics-analysis")
     os.mkdir(sample_stats_dir)
 
@@ -39,20 +42,16 @@ def analyze_sample_statistics(
 
         print_info(f"# window size = {window_size} ####################################################", results_dirname)
         estimates_empirical = tools.swd(emp_data, window_size=window_size)
+        estimates_scc = tools.swd(scc_data, window_size=window_size)
 
         edges_of_interest = tools.get_edges_of_interest(
-            emp_data,
-            sc_data,
-            pairs,
-            window_size=window_size,
-            h1=True
+            timeavg_estimates_empirical,
+            timeavg_estimates_sc
         )
         edges_of_interest += tools.get_edges_of_interest(
-            emp_data,
-            scc_data,
-            pairs,
-            window_size=window_size,
-            h2=True
+            np.var(estimates_empirical, axis=-1),
+            np.var(estimates_scc, axis=-1),
+            one_side=True
         )
         edges_of_interest[edges_of_interest != 0] = 1
         insig_edge_indices = [

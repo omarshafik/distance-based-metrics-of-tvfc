@@ -12,7 +12,8 @@ from tools import print_info
 def analyze_surrogate_statistics(
         data: str | np.ndarray,
         results_dirname: str,
-        metric: str = "swd",
+        metric_name: str = "swd",
+        metric: callable = None,
         filename: str = None,
         sc_data: np.ndarray = None,
         scc_data: np.ndarray = None,
@@ -43,16 +44,17 @@ def analyze_surrogate_statistics(
             'edr_h2': [],
             'edr_h1h2': [],
         }
-    if metric == "swc":
-        tvfc = tools.swc
-    elif metric == "mtd":
-        tvfc = tools.mtd
-    else:
-        tvfc = tools.swd
+    if metric is None:
+        if metric_name == "swc":
+            metric = tools.swc
+        elif metric_name == "mtd":
+            metric = tools.mtd
+        else:
+            metric = tools.swd
 
     print_info(
         "##########################################################################", results_dirname)
-    print_info(f"INFO: analyzing {metric.upper()} surrogate statistics", results_dirname)
+    print_info(f"INFO: analyzing {metric_name.upper()} surrogate statistics", results_dirname)
     if isinstance(data, str):
         emp_data = tools.prep_emp_data(np.loadtxt(data).T)
     else:
@@ -70,7 +72,7 @@ def analyze_surrogate_statistics(
         scc_data = tools.laumann(emp_data)
 
 
-    surrogate_dir = os.path.join(results_dirname, f"{metric}-surrogate-analysis")
+    surrogate_dir = os.path.join(results_dirname, f"{metric_name}-surrogate-analysis")
     if plot:
         os.mkdir(surrogate_dir)
 
@@ -107,8 +109,14 @@ def analyze_surrogate_statistics(
         title="SCC Surrogate",
         out=os.path.join(surrogate_dir, "autcorrelation-SCC-surrogate.png"))
 
-    timeavg_estimates_empirical = tvfc(emp_data, emp_data.shape[-1], pairs=pairs)
-    timeavg_estimates_sc = tvfc(sc_data, sc_data.shape[-1], pairs=pairs)
+    timeavg_estimates_empirical = metric(emp_data, emp_data.shape[-1], pairs=pairs)
+    timeavg_estimates_sc = metric(sc_data, sc_data.shape[-1], pairs=pairs)
+    
+    if metric_name in ["mtd", "swd"]:
+        # prepare pointwise estimates to reduce amount of computations
+        pw_estimates_empirical = metric(emp_data, 1, pairs=pairs)
+        pw_estimates_sc = metric(sc_data, 1, pairs=pairs)
+        pw_estimates_scc = metric(scc_data, 1, pairs=pairs)
 
     if window_sizes is None:
         window_sizes = [9, 19, 29, 39, 49, 59, 69,
@@ -117,9 +125,14 @@ def analyze_surrogate_statistics(
         print_info(
             f"# window size = {window_size} ####################################################", results_dirname)
         # Compute and plot tvFC estimates
-        estimates_empirical = tvfc(emp_data, window_size=window_size, pairs=pairs)
-        estimates_sc = tvfc(sc_data, window_size=window_size, pairs=pairs)
-        estimates_scc = tvfc(scc_data, window_size=window_size, pairs=pairs)
+        if metric_name in ["mtd", "swd"]:
+            estimates_empirical = tools.sliding_average(pw_estimates_empirical, window_size)
+            estimates_sc = tools.sliding_average(pw_estimates_sc, window_size)
+            estimates_scc = tools.sliding_average(pw_estimates_scc, window_size)
+        else:
+            estimates_empirical = metric(emp_data, window_size=window_size, pairs=pairs)
+            estimates_sc = metric(sc_data, window_size=window_size, pairs=pairs)
+            estimates_scc = metric(scc_data, window_size=window_size, pairs=pairs)
 
         tools.plot_overlapping_distributions(
             [estimates_empirical, estimates_sc],
@@ -144,7 +157,7 @@ def analyze_surrogate_statistics(
 
         if window_size > 1 and window_size < 100:
             results['window_size'].append(window_size)
-            results['metric'].append(metric)
+            results['metric'].append(metric_name)
             results['filename'].append(filename)
             edge_variance_empirical = np.var(estimates_empirical, axis=-1)
             edge_variance_scc = np.var(estimates_scc, axis=-1)
@@ -362,11 +375,11 @@ def analyze_surrogate_statistics(
                 edge_h1h2_significance_rate,
                 false_significance_rate
             )
-            print_info(f"INFO: Disriminability index of H1 (w={window_size}): " + \
+            print_info(f"INFO: SDV of H1 (w={window_size}): " + \
                 f"{sdv_h1}", results_dirname)
-            print_info(f"INFO: Disriminability index of H2 (w={window_size}): " + \
+            print_info(f"INFO: SDV of H2 (w={window_size}): " + \
                 f"{sdv_h2}", results_dirname)
-            print_info(f"INFO: Disriminability index of H1 & H2 (w={window_size}): " + \
+            print_info(f"INFO: SDV of H1 & H2 (w={window_size}): " + \
                 f"{sdv_h1h2}", results_dirname)
             results["sdv_h1"].append(sdv_h1)
             results["sdv_h2"].append(sdv_h2)
@@ -383,11 +396,11 @@ def analyze_surrogate_statistics(
                 edge_h1h2_significance_rate,
                 false_significance_rate
             )
-            print_info(f"INFO: Significance rate disriminability index of H1 (w={window_size}): " + \
+            print_info(f"INFO: SDR of H1 (w={window_size}): " + \
                 f"{sdr_h1}", results_dirname)
-            print_info(f"INFO: Significance rate disriminability index of H2 (w={window_size}): " + \
+            print_info(f"INFO: SDR of H2 (w={window_size}): " + \
                 f"{sdr_h2}", results_dirname)
-            print_info(f"INFO: Significance rate disriminability index of H1 & H2 (w={window_size}): " + \
+            print_info(f"INFO: SDR of H1 & H2 (w={window_size}): " + \
                 f"{sdr_h1h2}", results_dirname)
             results["sdr_h1"].append(sdr_h1)
             results["sdr_h2"].append(sdr_h2)
@@ -404,11 +417,11 @@ def analyze_surrogate_statistics(
                 edge_h1h2_significance_rate,
                 false_significance_rate
             )
-            print_info(f"INFO: Edge disriminability index of H1 (w={window_size}): " + \
+            print_info(f"INFO: EDR of H1 (w={window_size}): " + \
                 f"{edr_h1}", results_dirname)
-            print_info(f"INFO: Edge disriminability index of H2 (w={window_size}): " + \
+            print_info(f"INFO: EDR of H2 (w={window_size}): " + \
                 f"{edr_h2}", results_dirname)
-            print_info(f"INFO: Edge disriminability index of H1 & H2 (w={window_size}): " + \
+            print_info(f"INFO: EDR of H1 & H2 (w={window_size}): " + \
                 f"{edr_h1h2}", results_dirname)
             results["edr_h1"].append(edr_h1)
             results["edr_h2"].append(edr_h2)
@@ -501,7 +514,7 @@ def analyze_surrogate_statistics(
 def evaluate_tvfc_metrics(
     input_filenames: str,
     results_dirname: str,
-    metrics: list = None):
+    metrics: dict = None):
     """_summary_
 
     Args:
@@ -510,7 +523,11 @@ def evaluate_tvfc_metrics(
         metrics (list, optional): _description_. Defaults to ["mtd", "swc", "swd"].
     """
     if metrics is None:
-        metrics = ["mtd", "swc", "swd"]
+        metrics = {
+            "mtd": tools.mtd,
+            "swc": tools.swc,
+            "swd": tools.swd
+        }
 
     results = {
         'filename': [],
@@ -534,12 +551,14 @@ def evaluate_tvfc_metrics(
         "##########################################################################", results_dirname)
     print_info("INFO: Caryying out tvFC metrics evaluation analysis", results_dirname)
 
-    number_of_subjects = 20
+    number_of_subjects = 30
     random_file_indices = np.random.choice(len(input_filenames), number_of_subjects, replace=False)
     selected_subject_nums = [
         os.path.basename(input_filenames[subject_idx]) for subject_idx in random_file_indices]
     print_info(f"INFO: Selected files {', '.join(selected_subject_nums)}", results_dirname)
 
+    window_sizes = [9, 19, 29, 39, 49, 59, 69, 79, 89, 99]
+    
     for fileidx in random_file_indices:
         filename = input_filenames[fileidx]
         emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
@@ -549,11 +568,13 @@ def evaluate_tvfc_metrics(
         # autocorrelation, cross-frequency as empirical
         sc_data = tools.sc(emp_data)
         scc_data = tools.laumann(emp_data)
-        for metric in metrics:
+        for metric_name, metric in metrics.items():
             analyze_surrogate_statistics(
                 emp_data,
                 results_dirname,
+                metric_name=metric_name,
                 metric=metric,
+                window_sizes=window_sizes,
                 sc_data=sc_data,
                 scc_data=scc_data,
                 pairs=pairs,
