@@ -9,7 +9,8 @@ from tools import print_info
 def analyze_between_subjects_ensemble_statistics(
     input_filenames: list,
     results_dirname: str,
-    random: np.random.Generator = None):
+    random: np.random.Generator = None,
+    metric: callable = tools.swd):
     """ run procedures for analyzing and visualizing between-subjects ensemble statistics
     Args:
         input_dirname (str): parent directory of all parcel time series files
@@ -42,7 +43,7 @@ def analyze_between_subjects_ensemble_statistics(
             emp_data = tools.prep_emp_data(np.loadtxt(input_filenames[fileidx]).T)
             session_length = emp_data.shape[-1] // 4
             emp_data = emp_data[:, 0:session_length]
-            estimates_empirical = tools.swd(emp_data, window_size=window_size)
+            estimates_empirical = metric(emp_data, window_size=window_size)
             n += estimates_empirical.shape[-1]
             edgeavg_means = np.mean(estimates_empirical, axis=0)
             edgeavg_means_per_subject.append(edgeavg_means)

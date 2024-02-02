@@ -9,7 +9,8 @@ from tools import print_info
 def analyze_sample_statistics(
     filename: str,
     results_dirname: str,
-    random: np.random.Generator = None):
+    random: np.random.Generator = None,
+    metric: callable = tools.swd):
     """ run procedures for analyzing and visualizing subject-level sample statistics
 
     Args:
@@ -32,8 +33,8 @@ def analyze_sample_statistics(
     sc_data = tools.sc(emp_data, random)
     scc_data = tools.laumann(emp_data, random)
 
-    timeavg_estimates_empirical = tools.swd(emp_data, emp_data.shape[-1], pairs=pairs)
-    timeavg_estimates_sc = tools.swd(sc_data, sc_data.shape[-1], pairs=pairs)
+    timeavg_estimates_empirical = metric(emp_data, emp_data.shape[-1], pairs=pairs)
+    timeavg_estimates_sc = metric(sc_data, sc_data.shape[-1], pairs=pairs)
 
     sample_stats_dir = os.path.join(results_dirname, "within-subject-sample-statistics-analysis")
     os.mkdir(sample_stats_dir)
@@ -44,8 +45,8 @@ def analyze_sample_statistics(
         os.mkdir(sample_stats_window_dir)
 
         print_info(f"# window size = {window_size} ####################################################", results_dirname)
-        estimates_empirical = tools.swd(emp_data, window_size=window_size)
-        estimates_scc = tools.swd(scc_data, window_size=window_size)
+        estimates_empirical = metric(emp_data, window_size=window_size)
+        estimates_scc = metric(scc_data, window_size=window_size)
 
         edges_of_interest = tools.get_edges_of_interest(
             timeavg_estimates_empirical,
