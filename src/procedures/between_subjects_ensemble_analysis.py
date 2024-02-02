@@ -23,7 +23,7 @@ def analyze_between_subjects_ensemble_statistics(
     between_subject_dir = os.path.join(results_dirname, "between-subjects-ensemble-statistics")
     os.mkdir(between_subject_dir)
 
-    window_sizes = [9, 19, 29, 39, 49, 59, 69]
+    window_sizes = [9, 19, 29, 39, 49, 59, 69, 79, 89, 99]
     number_of_subjects = 30
     random_file_indices = random.choice(len(input_filenames), number_of_subjects, replace=False)
     selected_subject_nums = [
@@ -31,22 +31,29 @@ def analyze_between_subjects_ensemble_statistics(
     print_info(f"INFO: Selected files {', '.join(selected_subject_nums)}", results_dirname)
     for window_size in window_sizes:
         print_info(f"# window size = {window_size} ###############################################", results_dirname)
-        means = []
-        variances = []
-        samples = []
+        edgeavg_means_per_subject = []
+        edgeavg_variances_per_subject = []
+        edgeavg_means_means = []
+        edgeavg_means_variances = []
+        edgeavg_variances_means = []
+        edgeavg_variances_variances = []
+        n = 0
         for fileidx in random_file_indices:
             emp_data = tools.prep_emp_data(np.loadtxt(input_filenames[fileidx]).T)
             emp_data = emp_data[:, 2000:2500]
             estimates_empirical = tools.swd(emp_data, window_size=window_size)
-            means.append(np.mean(estimates_empirical))
-            variances.append(np.var(estimates_empirical))
-            estimates_empirical_flat = estimates_empirical.flatten()
-            samples.append(
-                estimates_empirical_flat[
-                    random.choice(estimates_empirical_flat.shape[0], 1000, replace=False)])
+            n += estimates_empirical.shape[-1]
+            edgeavg_means = np.mean(estimates_empirical, axis=0)
+            edgeavg_means_per_subject.append(edgeavg_means)
+            edgeavg_variances = np.var(estimates_empirical, axis=0)
+            edgeavg_variances_per_subject.append(edgeavg_variances)
+            edgeavg_means_means.append(np.mean(edgeavg_means))
+            edgeavg_means_variances.append(np.var(edgeavg_means) * estimates_empirical.shape[-1])
+            edgeavg_variances_means.append(np.mean(edgeavg_variances))
+            edgeavg_variances_variances.append(np.var(edgeavg_variances) * estimates_empirical.shape[-1])
 
         tools.plot_distribution(
-            np.array([means]),
+            np.array([edgeavg_means_means]),
             xlabel="Mean",
             ylabel="Count",
             title=f"n = {number_of_subjects}, w = {window_size}",
@@ -54,7 +61,7 @@ def analyze_between_subjects_ensemble_statistics(
             out=os.path.join(between_subject_dir,
             f"means-distribution-window-{window_size}.png"))
         tools.plot_distribution(
-            np.array([variances]),
+            np.array([edgeavg_variances_means]),
             xlabel="Variance",
             ylabel="Count",
             title=f"n = {number_of_subjects}, w = {window_size}",
@@ -62,10 +69,19 @@ def analyze_between_subjects_ensemble_statistics(
             out=os.path.join(between_subject_dir,
             f"variances-distribution-window-{window_size}.png"))
 
-        between_variation = np.sum([(mean - np.mean(means)) ** 2 for mean in means])
-        within_variation = np.sum(variances)
-        f1_score = between_variation / within_variation
-        print_info(F"INFO: Levene's statistics: {stats.levene(*samples)}", results_dirname)
-        print_info(F"INFO: Flinger's statistics: {stats.fligner(*samples)}", results_dirname)
-        print_info(F"INFO: Bartlett's statistics: {stats.bartlett(*samples)}", results_dirname)
-        print_info(F"INFO: F1 score: {f1_score}", results_dirname)
+        between_variation = np.sum([(mean - np.mean(edgeavg_means_means)) ** 2 for mean in edgeavg_means_means])
+        msw = np.sum(edgeavg_means_variances) / (number_of_subjects - 1)
+        msb = between_variation / (n - number_of_subjects)
+        f_score = msb / msw
+        print_info(F"INFO: Means F-score: {f_score}", results_dirname)
+
+        between_variation = np.sum([(mean - np.mean(edgeavg_variances_means)) ** 2 for mean in edgeavg_variances_means])
+        msw = np.sum(edgeavg_variances_variances) / (number_of_subjects - 1)
+        msb = between_variation / (n - number_of_subjects)
+        f_score = msb / msw
+        print_info(F"INFO: Variances F-score: {f_score}", results_dirname)
+
+        means_kruksal = stats.kruskal(*edgeavg_means_per_subject)
+        variances_kruksal = stats.kruskal(*edgeavg_variances_per_subject)
+        print_info(F"INFO: Kruksal's statistics for mean parameter: {means_kruksal}", results_dirname)
+        print_info(F"INFO: Kruksal's statistics for variance parameter: {variances_kruksal}", results_dirname)
