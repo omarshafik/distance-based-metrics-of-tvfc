@@ -19,10 +19,8 @@ from .plot import (
     plot_grid,
     plot_correlation_matrices)
 from .test import (
-    test_independence,
     test_stationary,
     test_distribution,
-    test_identical_distribution,
     get_edges_of_interest,
     significant_estimates,
     significant_time_points,
