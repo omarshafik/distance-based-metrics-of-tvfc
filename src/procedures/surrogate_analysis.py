@@ -20,7 +20,8 @@ def analyze_surrogate_statistics(
         pairs: np.ndarray = None,
         window_sizes: np.ndarray = None,
         plot: bool = True,
-        results: dict = None):
+        results: dict = None,
+        random: np.random.Generator = None):
     """ run procedures for analyzing empirical against surrogate statistics of given metric
 
     Args:
@@ -28,6 +29,8 @@ def analyze_surrogate_statistics(
         results_dirname (str): parent directory name of the results
             (results will stored in a new subdirectory)
     """
+    if random is None:
+        random = np.random
     tools.plot.PLOT = plot
     if results is None:
         results = {
@@ -66,10 +69,10 @@ def analyze_surrogate_statistics(
     # generate Surrogate data with the same frequency spectrum,
     # and autocorrelation as empirical
     if sc_data is None:
-        sc_data = tools.sc(emp_data)
+        sc_data = tools.sc(emp_data, random)
     
     if scc_data is None:
-        scc_data = tools.laumann(emp_data)
+        scc_data = tools.laumann(emp_data, random)
 
 
     surrogate_dir = os.path.join(results_dirname, f"{metric_name}-surrogate-analysis")
@@ -488,7 +491,7 @@ def analyze_surrogate_statistics(
             #     if is_edge_significant]
 
             # session_length = estimates_empirical.shape[-1] // 4
-            # session_idx = np.random.choice(4)
+            # session_idx = random.choice(4)
             # start = session_idx * session_length
             # end = start + session_length
             # stationarity_rate = 1 - tools.test_stationary(
@@ -514,7 +517,8 @@ def analyze_surrogate_statistics(
 def evaluate_tvfc_metrics(
     input_filenames: str,
     results_dirname: str,
-    metrics: dict = None):
+    metrics: dict = None,
+    random: np.random.Generator = None):
     """_summary_
 
     Args:
@@ -522,6 +526,8 @@ def evaluate_tvfc_metrics(
         results_dirname (str): _description_
         metrics (list, optional): _description_. Defaults to ["mtd", "swc", "swd"].
     """
+    if random is None:
+        random = np.random
     if metrics is None:
         metrics = {
             "mtd": tools.mtd,
@@ -552,7 +558,7 @@ def evaluate_tvfc_metrics(
     print_info("INFO: Caryying out tvFC metrics evaluation analysis", results_dirname)
 
     number_of_subjects = 30
-    random_file_indices = np.random.choice(len(input_filenames), number_of_subjects, replace=False)
+    random_file_indices = random.choice(len(input_filenames), number_of_subjects, replace=False)
     selected_subject_nums = [
         os.path.basename(input_filenames[subject_idx]) for subject_idx in random_file_indices]
     print_info(f"INFO: Selected files {', '.join(selected_subject_nums)}", results_dirname)
@@ -566,8 +572,8 @@ def evaluate_tvfc_metrics(
 
         # generate Surrogate data with the same frequency spectrum,
         # autocorrelation, cross-frequency as empirical
-        sc_data = tools.sc(emp_data)
-        scc_data = tools.laumann(emp_data)
+        sc_data = tools.sc(emp_data, random)
+        scc_data = tools.laumann(emp_data, random)
         for metric_name, metric in metrics.items():
             analyze_surrogate_statistics(
                 emp_data,

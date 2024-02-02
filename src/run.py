@@ -3,7 +3,7 @@
 import argparse
 import os
 from datetime import datetime
-import numpy as np
+from numpy.random import MT19937, RandomState, SeedSequence
 import procedures
 from tools import print_info
 
@@ -31,8 +31,7 @@ if args.outdir is not None and not os.path.isdir(args.outdir):
 
 
 # set the randomization seed; this will make all steps of the study replicable in any run
-np.random.seed(args.random_seed)
-
+random = RandomState(MT19937(SeedSequence(args.random_seed)))
 # Find all files in the directory (we assume all files are txt of nodes timeseries)
 input_files = []
 input_files.extend([
@@ -48,14 +47,14 @@ if not os.path.isdir(outdir):
 results_dir = os.path.join(outdir, TIMESTAMP)
 os.mkdir(results_dir)
 
-file_to_process = input_files[np.random.choice(len(input_files), size=1)[0]]
+file_to_process = input_files[random.choice(len(input_files), size=1)[0]]
 print_info(f"INFO: randomization seed: {args.random_seed}", results_dir)
 print_info(f"INFO: Selected file {os.path.basename(file_to_process)}", results_dir)
-procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir)
-procedures.analyze_surrogate_statistics(file_to_process, results_dir, metric_name="mtd")
-procedures.analyze_surrogate_statistics(file_to_process, results_dir, metric_name="swc")
-procedures.analyze_surrogate_statistics(file_to_process, results_dir)
-procedures.analyze_sample_statistics(file_to_process, results_dir)
-procedures.analyze_between_subjects_ensemble_statistics(input_files, results_dir)
-procedures.analyze_time_averaged_metrics_correlation(input_files, results_dir)
-procedures.evaluate_tvfc_metrics(input_files, results_dir)
+procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir, random=random)
+procedures.analyze_surrogate_statistics(file_to_process, results_dir, metric_name="mtd", random=random)
+procedures.analyze_surrogate_statistics(file_to_process, results_dir, metric_name="swc", random=random)
+procedures.analyze_surrogate_statistics(file_to_process, results_dir, random=random)
+procedures.analyze_sample_statistics(file_to_process, results_dir, random=random)
+procedures.analyze_between_subjects_ensemble_statistics(input_files, results_dir, random=random)
+procedures.analyze_time_averaged_metrics_correlation(input_files, results_dir, random=random)
+procedures.evaluate_tvfc_metrics(input_files, results_dir, random=random)

@@ -8,13 +8,16 @@ from tools import print_info
 
 def analyze_between_subjects_ensemble_statistics(
     input_filenames: list,
-    results_dirname: str):
+    results_dirname: str,
+    random: np.random.Generator = None):
     """ run procedures for analyzing and visualizing between-subjects ensemble statistics
     Args:
         input_dirname (str): parent directory of all parcel time series files
         results_dirname (str): parent directory name of the results
             (results will stored in a new subdirectory)
     """
+    if random is None:
+        random = np.random
     print_info("##########################################################################", results_dirname)
     print_info("INFO: analyzing between-subject ensemble statistics", results_dirname)
     between_subject_dir = os.path.join(results_dirname, "between-subjects-ensemble-statistics")
@@ -22,7 +25,7 @@ def analyze_between_subjects_ensemble_statistics(
 
     window_sizes = [9, 19, 29, 39, 49, 59, 69]
     number_of_subjects = 30
-    random_file_indices = np.random.choice(len(input_filenames), number_of_subjects, replace=False)
+    random_file_indices = random.choice(len(input_filenames), number_of_subjects, replace=False)
     selected_subject_nums = [
         os.path.basename(input_filenames[subject_idx]) for subject_idx in random_file_indices]
     print_info(f"INFO: Selected files {', '.join(selected_subject_nums)}", results_dirname)
@@ -40,7 +43,7 @@ def analyze_between_subjects_ensemble_statistics(
             estimates_empirical_flat = estimates_empirical.flatten()
             samples.append(
                 estimates_empirical_flat[
-                    np.random.choice(estimates_empirical_flat.shape[0], 1000, replace=False)])
+                    random.choice(estimates_empirical_flat.shape[0], 1000, replace=False)])
 
         tools.plot_distribution(
             np.array([means]),

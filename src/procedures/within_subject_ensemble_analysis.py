@@ -9,7 +9,8 @@ from tools import print_info
 
 def analyze_within_subject_ensemble_statistics(
     filename: str,
-    results_dirname: str):
+    results_dirname: str,
+    random: np.random.Generator = None):
     """ run procedures for analyzing within-subject ensemble statistics of SWD,
     and compare with SWC
 
@@ -18,6 +19,8 @@ def analyze_within_subject_ensemble_statistics(
         results_dirname (str): parent directory name of the results
             (results will stored in a new subdirectory)
     """
+    if random is None:
+        random = np.random
     print_info("##########################################################################", results_dirname)
     print_info("INFO: analyzing within-subject ensemble statistics", results_dirname)
     emp_data = tools.prep_emp_data(np.loadtxt(filename).T)

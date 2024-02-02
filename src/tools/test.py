@@ -7,8 +7,6 @@ from scipy import stats
 import statsmodels.api as sm
 from joblib import Parallel, delayed
 from statsmodels.tools.sm_exceptions import InterpolationWarning
-from tools.analyze import swd
-import tools.common as common
 warnings.simplefilter('ignore', InterpolationWarning)
 
 def test_stationary(
@@ -32,29 +30,6 @@ def test_stationary(
         ) for edge in timeseries))[:,1]
     return np.sum(pvalues > alpha) / len(pvalues)
 
-def test_independence(
-    timeseries,
-    sample_size: int,
-    test = sm.stats.acorr_ljungbox,
-    alpha: float = 0.05,
-    **kwargs) -> float:
-    """ compute percentage of samples that satistify the autocorrelation \
-        (independence) assumption of central limit theorem 
-
-    Args:
-        timeseries (any): array of tvFC estimates
-        sample_size (int): sample size to apply the test on
-        test (callable, optional): test function to use. Defaults to sm.tsa.adfuller.
-        alpha (float, optional): alpha (critical p) value to use. Defaults to 0.05.
-
-    Returns:
-        float: percentage of samples that satisfy the independence assumption 
-    """
-    lb_pvalues = np.squeeze(Parallel()(
-        delayed(test)(
-                timeseries[idx:idx+sample_size], **kwargs
-        ) for idx in range(len(timeseries) - sample_size - 1)))[:,1]
-    return np.sum(lb_pvalues > alpha) / len(lb_pvalues)
 
 def test_distribution(data) -> tuple:
     """ compute skewness and kurtosis of the data distribution
@@ -66,28 +41,6 @@ def test_distribution(data) -> tuple:
         tuple: tuple of skewness and kurtosis
     """
     return (stats.skew(data.flatten()), stats.kurtosis(data.flatten()))
-
-def test_identical_distribution(timeseries: np.ndarray, nrefs: int = 30) -> int:
-    """ Apply Kolo
-
-    Args:
-        timeseries (ndarray): time series array of estimates
-        nrefs (int): number of reference edges (pairs estimates). \
-            These are selected randomly from the time series array. 
-
-    Returns:
-        int: percentage of edges that have identical distributions
-    """
-    ks_pvalues = []
-    sample_ref_edges = timeseries[np.random.choice(timeseries.shape[0], size=nrefs, replace=False)]
-    for refparcel in sample_ref_edges:
-        ks_pvalues.extend(np.squeeze(Parallel()(
-            delayed(stats.kstest)(
-                    parcel,
-                    refparcel
-            ) for parcel in timeseries))[:, 1])
-    ks_pvalues = np.array(ks_pvalues)
-    return np.sum(ks_pvalues < 0.05) / len(ks_pvalues)
 
 def get_edges_of_interest(
     empirical_measures: np.ndarray,

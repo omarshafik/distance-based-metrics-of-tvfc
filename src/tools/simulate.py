@@ -1,7 +1,9 @@
 import numpy as np
 import tools
 
-def sc(empirical_data):
+def sc(
+    empirical_data,
+    random: np.random.Generator = None):
     """_summary_
 
     Args:
@@ -10,16 +12,20 @@ def sc(empirical_data):
     Returns:
         any: spectrally-constrained surrogate data
     """
+    if random is None:
+        random = np.random
     empirical_fft = np.fft.fft(empirical_data, axis=-1)
     empirical_fft_amplitude = np.abs(empirical_fft)
-    phase_noise = np.random.uniform(low=-np.pi, high=np.pi, size=empirical_data.shape)
+    phase_noise = random.uniform(low=-np.pi, high=np.pi, size=empirical_data.shape)
     simulated_spectrum = empirical_fft_amplitude \
         * np.exp(1j * phase_noise)
     sc_data = np.fft.ifft(simulated_spectrum, axis=-1).real
     sc_data = tools.normalized(sc_data, axis=-1)
     return sc_data
 
-def pr(empirical_data):
+def pr(
+    empirical_data,
+    random: np.random.Generator = None):
     """_summary_
 
     Args:
@@ -28,9 +34,11 @@ def pr(empirical_data):
     Returns:
         any: MVPR surrogate data
     """
+    if random is None:
+        random = np.random
     empirical_fft = np.fft.fft(empirical_data, axis=-1)
     empirical_fft_amplitude = np.abs(empirical_fft)
-    phase_noise = np.random.uniform(low=-np.pi, high=np.pi, size=empirical_data.shape[1])
+    phase_noise = random.uniform(low=-np.pi, high=np.pi, size=empirical_data.shape[1])
     empirical_fft_phases = np.angle(empirical_fft)
     simulated_spectrum = empirical_fft_amplitude \
         * np.exp(1j * (empirical_fft_phases + phase_noise))
@@ -38,7 +46,9 @@ def pr(empirical_data):
     pr_data = tools.normalized(pr_data, axis=-1)
     return pr_data
 
-def laumann(empirical_data):
+def laumann(
+    empirical_data,
+    random: np.random.Generator = None):
     """_summary_
 
     Args:
@@ -47,7 +57,9 @@ def laumann(empirical_data):
     Returns:
         any: Laumann's surrogate data
     """
-    noise = np.random.uniform(low=-np.pi, high=np.pi, size=empirical_data.shape)
+    if random is None:
+        random = np.random
+    noise = random.uniform(low=-np.pi, high=np.pi, size=empirical_data.shape)
     power_spectrum = np.mean(np.abs(np.fft.fft(empirical_data, axis=-1)), axis=0)
     simulated_spectrum = power_spectrum \
         * np.exp(1j * noise)

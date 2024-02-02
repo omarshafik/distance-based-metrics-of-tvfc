@@ -8,7 +8,8 @@ from tools import print_info
 
 def analyze_sample_statistics(
     filename: str,
-    results_dirname: str):
+    results_dirname: str,
+    random: np.random.Generator = None):
     """ run procedures for analyzing and visualizing subject-level sample statistics
 
     Args:
@@ -16,18 +17,20 @@ def analyze_sample_statistics(
         results_dirname (str): parent directory name of the results
             (results will stored in a new subdirectory)
     """
+    if random is None:
+        random = np.random
     print_info("##########################################################################", results_dirname)
     print_info("INFO: analyzing within-subject sample statistics", results_dirname)
     emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
     pairs = np.array(list(combinations(range(emp_data.shape[0]), 2)))
-    presentation_edges = np.random.choice(len(pairs), size=30, replace=False)
+    presentation_edges = random.choice(len(pairs), size=30, replace=False)
     start = 2000
     end = 3000
 
     # generate Surrogate data with the same frequency spectrum,
     # and autocorrelation as empirical
-    sc_data = tools.sc(emp_data)
-    scc_data = tools.laumann(emp_data)
+    sc_data = tools.sc(emp_data, random)
+    scc_data = tools.laumann(emp_data, random)
 
     timeavg_estimates_empirical = tools.swd(emp_data, emp_data.shape[-1], pairs=pairs)
     timeavg_estimates_sc = tools.swd(sc_data, sc_data.shape[-1], pairs=pairs)
