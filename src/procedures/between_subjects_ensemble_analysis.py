@@ -30,32 +30,27 @@ def analyze_between_subjects_ensemble_statistics(
     selected_subject_nums = [
         os.path.basename(input_filenames[subject_idx]) for subject_idx in random_file_indices]
     print_info(f"INFO: Selected files {', '.join(selected_subject_nums)}", results_dirname)
+    subsession_length = 200
     for window_size in window_sizes:
         print_info(f"# window size = {window_size} ###############################################", results_dirname)
         edgeavg_means_per_subject = []
         edgeavg_variances_per_subject = []
-        edgeavg_means_means = []
-        edgeavg_means_variances = []
-        edgeavg_variances_means = []
-        edgeavg_variances_variances = []
-        n = 0
         for fileidx in random_file_indices:
             emp_data = tools.prep_emp_data(np.loadtxt(input_filenames[fileidx]).T)
             session_length = emp_data.shape[-1] // 4
             emp_data = emp_data[:, 0:session_length]
             estimates_empirical = metric(emp_data, window_size=window_size)
-            n += estimates_empirical.shape[-1]
-            edgeavg_means = np.mean(estimates_empirical, axis=0)
+            edgeavg_means = tools.sliding_average(
+                np.mean(estimates_empirical, axis=0),
+                subsession_length)[::subsession_length]
             edgeavg_means_per_subject.append(edgeavg_means)
-            edgeavg_variances = np.var(estimates_empirical, axis=0)
+            edgeavg_variances = tools.sliding_average(
+                np.var(estimates_empirical, axis=0),
+                subsession_length)[::subsession_length]
             edgeavg_variances_per_subject.append(edgeavg_variances)
-            edgeavg_means_means.append(np.mean(edgeavg_means))
-            edgeavg_means_variances.append(np.var(edgeavg_means) * estimates_empirical.shape[-1])
-            edgeavg_variances_means.append(np.mean(edgeavg_variances))
-            edgeavg_variances_variances.append(np.var(edgeavg_variances) * estimates_empirical.shape[-1])
 
         tools.plot_distribution(
-            np.array([edgeavg_means_means]),
+            np.array([edgeavg_means_per_subject]),
             xlabel="Mean",
             ylabel="Count",
             title=f"n = {number_of_subjects}, w = {window_size}",
@@ -63,7 +58,7 @@ def analyze_between_subjects_ensemble_statistics(
             out=os.path.join(between_subject_dir,
             f"means-distribution-window-{window_size}.png"))
         tools.plot_distribution(
-            np.array([edgeavg_variances_means]),
+            np.array([edgeavg_variances_per_subject]),
             xlabel="Variance",
             ylabel="Count",
             title=f"n = {number_of_subjects}, w = {window_size}",
@@ -71,19 +66,12 @@ def analyze_between_subjects_ensemble_statistics(
             out=os.path.join(between_subject_dir,
             f"variances-distribution-window-{window_size}.png"))
 
-        between_variation = np.sum([(mean - np.mean(edgeavg_means_means)) ** 2 for mean in edgeavg_means_means])
-        msw = np.sum(edgeavg_means_variances) / (number_of_subjects - 1)
-        msb = between_variation / (n - number_of_subjects)
-        f_score = msb / msw
-        print_info(F"INFO: Means F-score: {f_score}", results_dirname)
-
-        between_variation = np.sum([(mean - np.mean(edgeavg_variances_means)) ** 2 for mean in edgeavg_variances_means])
-        msw = np.sum(edgeavg_variances_variances) / (number_of_subjects - 1)
-        msb = between_variation / (n - number_of_subjects)
-        f_score = msb / msw
-        print_info(F"INFO: Variances F-score: {f_score}", results_dirname)
-
         means_kruksal = stats.kruskal(*edgeavg_means_per_subject)
         variances_kruksal = stats.kruskal(*edgeavg_variances_per_subject)
         print_info(F"INFO: Kruksal's statistics for mean parameter: {means_kruksal}", results_dirname)
         print_info(F"INFO: Kruksal's statistics for variance parameter: {variances_kruksal}", results_dirname)
+
+        means_anova = stats.f_oneway(*edgeavg_means_per_subject)
+        variances_anova = stats.f_oneway(*edgeavg_variances_per_subject)
+        print_info(F"INFO: ANOVA's statistics for mean parameter: {means_anova}", results_dirname)
+        print_info(F"INFO: ANOVA's statistics for variance parameter: {variances_anova}", results_dirname)
