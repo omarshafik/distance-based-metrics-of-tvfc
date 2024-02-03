@@ -4,6 +4,8 @@ common utility functions
 import os
 import numpy as np
 
+PRINT = 1
+
 def normalized(timeseries_array: np.ndarray, axis: int = -1) -> np.ndarray:
     """ normalize given timeseries array
 
@@ -167,6 +169,8 @@ def print_info(info_str: str, outdir: str = None):
     Args:
         info_str (str): string for output
     """
+    if not PRINT:
+        return
     print(info_str)
     if outdir is not None and os.path.exists(outdir):
         log_filename = os.path.join(outdir, "info.log")

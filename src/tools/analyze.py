@@ -13,9 +13,8 @@ def swd_no_parallel(
     derivative: np.ndarray = None,
     use_derivative: bool = True,
     use_actual: bool = True,
-    transform = lambda x: np.emath.logn(10, x),
+    transform: bool = True,
     scale: float = 1,
-    return_distance: bool = False,
     safe_guard: int = 0,
     kaiser_beta: int = 0,
     pairs: np.ndarray = None) -> np.ndarray:
@@ -67,10 +66,8 @@ def swd_no_parallel(
     #  - stabilize mean and variance
     #  - allow distance-based values to change on a continous scale (-inf,+inf)
     #  - decrease distribution skewness
-    if return_distance is False and transform is not None:
-        distance_ts = -1 * transform(distance_ts + safe_guard)
-    elif transform is None and return_distance is False:
-        distance_ts = 1 / (distance_ts + safe_guard)
+    if transform:
+        distance_ts = -1 * np.log10(distance_ts + safe_guard)
 
     # get sliding window average (sample mean) values over the given window (sample) size
     sampled_distance_ts = common.sliding_average(
@@ -85,8 +82,7 @@ def swd(
     derivative: np.ndarray = None,
     use_derivative: bool = True,
     use_actual: bool = True,
-    transform = lambda x: np.emath.logn(10, x),
-    return_distance: bool = False,
+    transform: bool = True,
     safe_guard: int = 0,
     kaiser_beta: int = 5,
     pairs: np.ndarray = None,
@@ -102,10 +98,8 @@ def swd(
         use_derivative (bool, optional): \
             use the first order derivative in distance-based calculations. Defaults to True.
         use_actual (bool, optional): use actual fMRI timeseries. Defaults to True.
-        transform (callable, optional): \
-            the transform function to apply on computed distances. Defaults to np.log10.
-        return_distance (bool, optional): \
-            return distance values instead of inverted distance. Defaults to False.
+        transform (bool, optional): \
+            Transform estimates using inverse log. Defaults to True.
         safe_guard (int, optional): a guard value to prevent division by zero. Defaults to 0.
         kaiser_beta (int, optional): \
             parameter to use for applying the sliding average on pointwise distance-based values. \
@@ -134,7 +128,6 @@ def swd(
             window_size=window_size,
             use_actual=use_actual,
             transform=transform,
-            return_distance=return_distance,
             safe_guard=safe_guard,
             kaiser_beta=kaiser_beta,
             pairs=np.array([pair]),
@@ -145,7 +138,7 @@ def swc(
     window_size: int = 5,
     window: callable = np.hamming,
     axis: int = -1,
-    fisher: bool = True,
+    transform: bool = True,
     pairs: np.ndarray = None) -> np.ndarray:
     """ compute TVC estimate from fMRI signals using sliding window correlation
 
@@ -177,7 +170,7 @@ def swc(
             pairs = np.array(list(combinations(range(timeseries.shape[0]), 2)))
         corr_values = np.array([corr_values[:, i, j] for i, j in pairs])
 
-    if fisher:
+    if transform:
         return np.arctanh(corr_values)
     return corr_values
 

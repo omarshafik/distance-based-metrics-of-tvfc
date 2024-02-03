@@ -8,7 +8,8 @@ from .common import (
     sliding_average,
     pad_timeseries,
     prep_emp_data,
-    print_info)
+    print_info,
+    PRINT)
 from .plot import (
     plot_distribution,
     plot_overlapping_distributions,

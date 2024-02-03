@@ -4,7 +4,6 @@ import os
 from itertools import combinations
 import numpy as np
 import pandas as pd
-from scipy import stats
 import tools
 from tools import print_info
 
@@ -20,6 +19,7 @@ def analyze_surrogate_statistics(
         pairs: np.ndarray = None,
         window_sizes: np.ndarray = None,
         plot: bool = True,
+        info: bool = True,
         results: dict = None,
         random: np.random.Generator = None):
     """ run procedures for analyzing empirical against surrogate statistics of given metric
@@ -32,6 +32,7 @@ def analyze_surrogate_statistics(
     if random is None:
         random = np.random
     tools.plot.PLOT = plot
+    tools.common.PRINT = info
     if results is None:
         results = {
             'filename': [],
@@ -55,14 +56,13 @@ def analyze_surrogate_statistics(
         else:
             metric = tools.swd
 
-    print_info(
-        "##########################################################################", results_dirname)
+    print_info("##########################################################################", results_dirname)
     print_info(f"INFO: analyzing {metric_name.upper()} surrogate statistics", results_dirname)
     if isinstance(data, str):
         emp_data = tools.prep_emp_data(np.loadtxt(data).T)
     else:
         emp_data = data
-    
+
     if pairs is None:
         pairs = np.array(list(combinations(range(emp_data.shape[0]), 2)))
 
@@ -70,7 +70,7 @@ def analyze_surrogate_statistics(
     # and autocorrelation as empirical
     if sc_data is None:
         sc_data = tools.sc(emp_data, random)
-    
+
     if scc_data is None:
         scc_data = tools.laumann(emp_data, random)
 
@@ -564,7 +564,6 @@ def evaluate_tvfc_metrics(
     print_info(f"INFO: Selected files {', '.join(selected_subject_nums)}", results_dirname)
 
     window_sizes = [9, 19, 29, 39, 49, 59, 69, 79, 89, 99]
-    
     for fileidx in random_file_indices:
         filename = input_filenames[fileidx]
         emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
@@ -585,6 +584,7 @@ def evaluate_tvfc_metrics(
                 scc_data=scc_data,
                 pairs=pairs,
                 plot=False,
+                info=False,
                 filename=os.path.basename(filename),
                 results=results
             )

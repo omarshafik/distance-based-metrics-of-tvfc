@@ -10,6 +10,9 @@ from tools import print_info
 def analyze_within_subject_ensemble_statistics(
     filename: str,
     results_dirname: str,
+    metric_name: str = "swd",
+    metric: callable = None,
+    window_sizes: np.ndarray = None,
     random: np.random.Generator = None):
     """ run procedures for analyzing within-subject ensemble statistics of SWD,
     and compare with SWC
@@ -21,36 +24,44 @@ def analyze_within_subject_ensemble_statistics(
     """
     if random is None:
         random = np.random
+    if metric is None:
+        if metric_name == "swc":
+            metric = tools.swc
+        elif metric_name == "mtd":
+            metric = tools.mtd
+        else:
+            metric = tools.swd
     print_info("##########################################################################", results_dirname)
-    print_info("INFO: analyzing within-subject ensemble statistics", results_dirname)
+    print_info(f"INFO: analyzing within-subject {metric_name} ensemble statistics", results_dirname)
     emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
 
     emp_dir = os.path.join(results_dirname, "within-subject-empirical-ensemble-statistics")
     os.mkdir(emp_dir)
-    window_sizes = [1, 9, 19, 29, 39, 49, 59, 69, 79, 89, 99, emp_data.shape[-1]]
 
+    if window_sizes is None:
+        window_sizes = [emp_data.shape[-1]]
     for window_size in window_sizes:
         print_info(f"# window size = {window_size} ###############################################", results_dirname)
         # Compute and plot SWD
-        swd_estimates = tools.swd(emp_data, window_size=window_size)
-        print_info("INFO: empirical SWD-based estimates mean, variance: " +
-            f"{np.mean(swd_estimates), np.var(swd_estimates)}", results_dirname)
+        estimates = metric(emp_data, window_size=window_size)
+        print_info(f"INFO: empirical {metric_name.upper()}-based estimates mean, variance: " +
+            f"{np.mean(estimates), np.var(estimates)}", results_dirname)
         tools.plot_distribution(
-            swd_estimates,
+            estimates,
             xlabel="Estimate",
             ylabel="Density",
-            title=f"SWD (w = {window_size})",
+            title=f"{metric_name.upper()} (w = {window_size})",
             out=os.path.join(
                 emp_dir,
-                f"swd-sampling-distribution-{window_size}.png"
+                f"{metric_name}-sampling-distribution-{window_size}.png"
             ))
 
         # Compute and plot SWD (no log transform)
-        swd_estimates_no_log = tools.swd(emp_data, window_size=window_size, return_distance=True)
-        print_info("INFO: empirical SWD-based (without transformation) estimates mean, variance: " +
-            f"{np.mean(swd_estimates_no_log), np.var(swd_estimates_no_log)}", results_dirname)
+        estimates_no_log = metric(emp_data, window_size=window_size, transform=False)
+        print_info(f"INFO: empirical {metric_name.upper()}-based (without transformation) estimates mean, variance: " +
+            f"{np.mean(estimates_no_log), np.var(estimates_no_log)}", results_dirname)
         tools.plot_distribution(
-            swd_estimates_no_log,
+            estimates_no_log,
             xlabel="Estimate",
             ylabel="Density",
             title=f"SWD without Transformation (w = {window_size})",
@@ -59,37 +70,11 @@ def analyze_within_subject_ensemble_statistics(
                 f"swd-no-log-sampling-distribution-{window_size}.png"
             ))
 
-        if window_size == 1:
-            continue
-
-        # Compute and plot SWC
-        swc_estimates = tools.swc(emp_data, window_size=window_size)
-        tools.plot_distribution(
-            swc_estimates,
-            xlabel="Estimate",
-            ylabel="Density",
-            title=f"SWC (w = {window_size})",
-            out=os.path.join(
-                emp_dir,
-                f"swc-sampling-distribution-{window_size}.png"))
-
-        # Compute and plot SWC (no-fisher)
-        swc_estimates_no_fisher = tools.swc(emp_data, window_size=window_size, fisher=False)
-        tools.plot_distribution(
-            swc_estimates_no_fisher,
-            xlabel="Estimate",
-            ylabel="Density",
-            title=f"SWC without Transformation (w = {window_size})",
-            out=os.path.join(
-                emp_dir,
-                f"swc-no-fisher-sampling-distribution-{window_size}.png"))
-
         if window_size == emp_data.shape[-1]:
             continue
-
         # Plot edge-averaged SWD-based tvFC estimates
         tools.plot_global_timeseries(
-            swd_estimates,
+            estimates,
             xlabel="Time (TR)",
             ylabel="Estimate",
             title=f"w = {window_size}",
@@ -97,12 +82,12 @@ def analyze_within_subject_ensemble_statistics(
                 emp_dir,
                 f"global-swd-timeseries-{window_size}.png"))
         # compute and test the stationarity of SWD-based estimates' ensemble parameters
-        mean_stationary_pval = sm.tsa.adfuller(np.mean(swd_estimates, axis=0))[1]
-        var_stationary_pval = sm.tsa.adfuller(np.var(swd_estimates, axis=0))[1]
+        mean_stationary_pval = sm.tsa.adfuller(np.mean(estimates, axis=0))[1]
+        var_stationary_pval = sm.tsa.adfuller(np.var(estimates, axis=0))[1]
         print_info("Stationarity (mean, variance): " + \
             f"({mean_stationary_pval}, {var_stationary_pval})", results_dirname)
         print_info("Distribution stats (skewness, kurtosis): " + \
-            f"{tools.test_distribution(swd_estimates)}", results_dirname)
+            f"{tools.test_distribution(estimates)}", results_dirname)
         # End of window size loop
 
 def analyze_within_subject_swd_swc_correlation(

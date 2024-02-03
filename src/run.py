@@ -51,6 +51,7 @@ file_to_process = input_files[random.choice(len(input_files), size=1)[0]]
 print_info(f"INFO: randomization seed: {args.random_seed}", results_dir)
 print_info(f"INFO: Selected file {os.path.basename(file_to_process)}", results_dir)
 procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir, random=random)
+procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir, metric_name="swc", random=random)
 procedures.analyze_surrogate_statistics(file_to_process, results_dir, metric_name="mtd", random=random)
 procedures.analyze_surrogate_statistics(file_to_process, results_dir, metric_name="swc", random=random)
 procedures.analyze_surrogate_statistics(file_to_process, results_dir, random=random)
