@@ -136,21 +136,19 @@ def significant_time_points(
     return result_arr
 
 def scaled_significance_rate(
-    significance_array: np.ndarray,
-    indices: list):
+    significance_array: np.ndarray):
     """get the significance rate of given indices normalized by the chance rate
 
     Args:
         significance_array (np.ndarray): array of significance, with values \
             either 0 (null) or 1 (significant)
-        indices (list): indices for edges of interest
 
     Returns:
         float: normalized significance rate
     """
     chance_significance_count_per_edge = np.sum(significance_array) / significance_array.shape[0]
     rate = np.sum(
-        significance_array[indices], axis=-1
+        significance_array, axis=-1
     ) / (
         chance_significance_count_per_edge
     )
@@ -192,12 +190,11 @@ def sdr(
     null_rate_upper_bound = 1
     null_rate_lower_bound = 1
     if null_distribution is not None:
-        null_rate_upper_bound, null_rate_lower_bound = stats.norm.interval(
+        null_rate_lower_bound, null_rate_upper_bound = stats.norm.interval(
             (1 - alpha),
             loc=np.mean(null_distribution),
             scale=np.std(null_distribution)
         )
-
     statistic = (
         np.sum(
             significance_rate_of_interest[significance_rate_of_interest > null_rate_upper_bound]
@@ -226,7 +223,7 @@ def edr(
     null_rate_upper_bound = 1
     null_rate_lower_bound = 1
     if null_distribution is not None:
-        null_rate_upper_bound, null_rate_lower_bound = stats.norm.interval(
+        null_rate_lower_bound, null_rate_upper_bound = stats.norm.interval(
             (1 - alpha),
             loc=np.mean(null_distribution),
             scale=np.std(null_distribution)

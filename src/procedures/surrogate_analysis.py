@@ -69,10 +69,10 @@ def analyze_surrogate_statistics(
     # generate Surrogate data with the same frequency spectrum,
     # and autocorrelation as empirical
     if sc_data is None:
-        sc_data = tools.sc(emp_data, random)
+        sc_data = tools.sc(emp_data, random=random)
 
     if scc_data is None:
-        scc_data = tools.laumann(emp_data, random)
+        scc_data = tools.laumann(emp_data, random=random)
 
 
     surrogate_dir = os.path.join(results_dirname, f"{metric_name}-surrogate-analysis")
@@ -316,23 +316,6 @@ def analyze_surrogate_statistics(
                     f"filtered-h1h2-overlapping-distributions-{window_size}.png"
                 ))
 
-            sc_significance = np.abs(tools.significant_estimates(
-                sc_data,
-                mean=np.mean(estimates_empirical[insig_edge_indices]),
-                std=np.std(estimates_empirical[insig_edge_indices])))
-            sc_significance_rate = tools.scaled_significance_rate(
-                sc_significance,
-                list(range(sc_significance.shape[0]))
-            )
-            tools.plot_distribution(
-                sc_significance_rate,
-                xlabel="Significance Rate per Edge",
-                ylabel="Density",
-                title=f"w = {window_size}",
-                out=os.path.join(
-                    surrogate_dir,
-                    f"discriminability-sc-distributions-{window_size}.png"))
-
             estimates_significance = np.abs(tools.significant_estimates(
                 estimates_empirical,
                 mean=np.mean(estimates_empirical[insig_edge_indices]),
@@ -349,22 +332,30 @@ def analyze_surrogate_statistics(
             print_info(
                 f"INFO: Filtered type 1 error rate (w={window_size}): {type_1_error_rate}", results_dirname)
 
-            false_significance_rate = tools.scaled_significance_rate(
-                estimates_significance,
-                insig_edge_indices
+            empirical_significance_rate = tools.scaled_significance_rate(
+                estimates_significance
             )
-            edge_h1_significance_rate = tools.scaled_significance_rate(
-                estimates_significance,
-                sig_edge_indices_h1
+            false_significance_rate = empirical_significance_rate[insig_edge_indices]
+            edge_h1_significance_rate = empirical_significance_rate[sig_edge_indices_h1]
+            edge_h2_significance_rate = empirical_significance_rate[sig_edge_indices_h2]
+            edge_h1h2_significance_rate = empirical_significance_rate[sig_edge_indices_h1h2]
+
+            null_significance = np.abs(tools.significant_estimates(
+                estimates_sc,
+                mean=np.mean(estimates_empirical[insig_edge_indices]),
+                std=np.std(estimates_empirical[insig_edge_indices])))
+            null_significance_rate = tools.scaled_significance_rate(
+                null_significance
             )
-            edge_h2_significance_rate = tools.scaled_significance_rate(
-                estimates_significance,
-                sig_edge_indices_h2
-            )
-            edge_h1h2_significance_rate = tools.scaled_significance_rate(
-                estimates_significance,
-                sig_edge_indices_h1h2
-            )
+            tools.plot_overlapping_distributions(
+                [empirical_significance_rate, null_significance_rate],
+                ["Empirical", "SC"],
+                xlabel="Significance Rate per Edge",
+                ylabel="Density",
+                title=f"w = {window_size}",
+                out=os.path.join(
+                    surrogate_dir,
+                    f"discriminability-distributions-{window_size}.png"))
 
             sdv_h1 = tools.sdv(
                 edge_h1_significance_rate,

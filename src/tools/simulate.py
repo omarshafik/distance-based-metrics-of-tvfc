@@ -4,32 +4,44 @@ import tools
 def sc(
     empirical_data,
     random: np.random.Generator = None):
-    """_summary_
+    """
+    Generate spectrally-constrained surrogate data from empirical data.
 
     Args:
-        empirical_data (any): empirical data
+        empirical_data (np.ndarray): The empirical time series data for \
+                which the surrogate is to be generated.
+            The data should be structured as a numpy array, \
+                potentially multi-dimensional, where the last axis \
+            is considered the time or sequence axis.
+        random (np.random.Generator, optional): An instance of numpy's random number generator class.
 
     Returns:
-        any: spectrally-constrained surrogate data
+        np.ndarray: The generated spectrally-constrained surrogate data.
+
     """
     if random is None:
         random = np.random
     empirical_fft = np.fft.fft(empirical_data, axis=-1)
     empirical_fft_amplitude = np.abs(empirical_fft)
-    phase_noise = random.uniform(low=-np.pi, high=np.pi, size=empirical_data.shape)
+    noise = random.randn(*empirical_data.shape)
+    random_phases = np.angle(np.fft.fft(noise))
     simulated_spectrum = empirical_fft_amplitude \
-        * np.exp(1j * phase_noise)
+        * np.exp(1j * random_phases)
     sc_data = np.fft.ifft(simulated_spectrum, axis=-1).real
     sc_data = tools.normalized(sc_data, axis=-1)
     return sc_data
 
 def pr(
     empirical_data,
+    average_spectrum=False,
     random: np.random.Generator = None):
-    """_summary_
+    """
+    Generate phase-randomized surrogate data based on the empirical data
+    by randomizing the phase of the Fourier transform while preserving the amplitude spectrum.
+    Ensures symmetrical phase distribution for real-valued time series data.
 
     Args:
-        empirical_data (any): empirical data
+        empirical_data (np.ndarray): The empirical time series data as a numpy array.
 
     Returns:
         any: MVPR surrogate data
@@ -38,10 +50,14 @@ def pr(
         random = np.random
     empirical_fft = np.fft.fft(empirical_data, axis=-1)
     empirical_fft_amplitude = np.abs(empirical_fft)
-    phase_noise = random.uniform(low=-np.pi, high=np.pi, size=empirical_data.shape[1])
+    if average_spectrum:
+        np.mean(empirical_fft_amplitude, axis=0)
+    noise = random.randn(empirical_data.shape[-1])
+    random_phases = np.angle(np.fft.fft(noise))
+    # random_phases = random.uniform(low=-np.pi, high=np.pi, size=empirical_data.shape[1])
     empirical_fft_phases = np.angle(empirical_fft)
     simulated_spectrum = empirical_fft_amplitude \
-        * np.exp(1j * (empirical_fft_phases + phase_noise))
+        * np.exp(1j * (empirical_fft_phases + random_phases))
     pr_data = np.fft.ifft(simulated_spectrum, axis=-1).real
     pr_data = tools.normalized(pr_data, axis=-1)
     return pr_data
@@ -59,10 +75,11 @@ def laumann(
     """
     if random is None:
         random = np.random
-    noise = random.uniform(low=-np.pi, high=np.pi, size=empirical_data.shape)
+    noise = random.randn(*empirical_data.shape)
+    random_phases = np.angle(np.fft.fft(noise))
     power_spectrum = np.mean(np.abs(np.fft.fft(empirical_data, axis=-1)), axis=0)
     simulated_spectrum = power_spectrum \
-        * np.exp(1j * noise)
+        * np.exp(1j * random_phases)
     sc_data = np.fft.ifft(simulated_spectrum, axis=-1).real
     emp_cov = np.cov(empirical_data)
     chol_decomposition = np.linalg.cholesky(emp_cov)
