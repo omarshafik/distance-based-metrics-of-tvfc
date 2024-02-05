@@ -341,7 +341,7 @@ def analyze_surrogate_statistics(
             edge_h1h2_significance_rate = empirical_significance_rate[sig_edge_indices_h1h2]
 
             null_significance = np.abs(tools.significant_estimates(
-                estimates_sc,
+                estimates_scc,
                 mean=np.mean(estimates_empirical[insig_edge_indices]),
                 std=np.std(estimates_empirical[insig_edge_indices])))
             null_significance_rate = tools.scaled_significance_rate(
@@ -349,7 +349,7 @@ def analyze_surrogate_statistics(
             )
             tools.plot_overlapping_distributions(
                 [empirical_significance_rate, null_significance_rate],
-                ["Empirical", "SC"],
+                ["Empirical", "SCC"],
                 xlabel="Significance Rate per Edge",
                 ylabel="Density",
                 title=f"w = {window_size}",
@@ -380,18 +380,15 @@ def analyze_surrogate_statistics(
             results["sdv_h1h2"].append(sdv_h1h2)
             sdr_h1 = tools.sdr(
                 edge_h1_significance_rate,
-                false_significance_rate,
-                null_distribution=null_significance_rate
+                false_significance_rate
             )
             sdr_h2 = tools.sdr(
                 edge_h2_significance_rate,
-                false_significance_rate,
-                null_distribution=null_significance_rate
+                false_significance_rate
             )
             sdr_h1h2 =  tools.sdr(
                 edge_h1h2_significance_rate,
-                false_significance_rate,
-                null_distribution=null_significance_rate
+                false_significance_rate
             )
             print_info(f"INFO: SDR of H1 (w={window_size}): " + \
                 f"{sdr_h1}", results_dirname)
@@ -404,18 +401,15 @@ def analyze_surrogate_statistics(
             results["sdr_h1h2"].append(sdr_h1h2)
             edr_h1 = tools.edr(
                 edge_h1_significance_rate,
-                false_significance_rate,
-                null_distribution=null_significance_rate
+                false_significance_rate
             )
             edr_h2 = tools.edr(
                 edge_h2_significance_rate,
-                false_significance_rate,
-                null_distribution=null_significance_rate
+                false_significance_rate
             )
             edr_h1h2 =  tools.edr(
                 edge_h1h2_significance_rate,
-                false_significance_rate,
-                null_distribution=null_significance_rate
+                false_significance_rate
             )
             print_info(f"INFO: EDR of H1 (w={window_size}): " + \
                 f"{edr_h1}", results_dirname)
