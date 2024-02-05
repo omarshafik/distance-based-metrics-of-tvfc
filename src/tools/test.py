@@ -177,7 +177,7 @@ def sdr(
     significance_rate_of_interest: float,
     false_significance_rate: float,
     null_distribution: np.ndarray = None,
-    alpha: float = 0.05):
+    alpha: float = 0.1):
     """get the significance rate discriminability (SRD) rate
 
     Args:
@@ -190,11 +190,9 @@ def sdr(
     null_rate_upper_bound = 1
     null_rate_lower_bound = 1
     if null_distribution is not None:
-        null_rate_lower_bound, null_rate_upper_bound = stats.norm.interval(
-            (1 - alpha),
-            loc=np.mean(null_distribution),
-            scale=np.std(null_distribution)
-        )
+        null_rate_lower_bound = np.percentile(null_distribution, 100 * (alpha // 2))
+        null_rate_upper_bound = np.percentile(null_distribution, 100 * (1 - alpha // 2))
+
     statistic = (
         np.sum(
             significance_rate_of_interest[significance_rate_of_interest > null_rate_upper_bound]
@@ -223,11 +221,8 @@ def edr(
     null_rate_upper_bound = 1
     null_rate_lower_bound = 1
     if null_distribution is not None:
-        null_rate_lower_bound, null_rate_upper_bound = stats.norm.interval(
-            (1 - alpha),
-            loc=np.mean(null_distribution),
-            scale=np.std(null_distribution)
-        )
+        null_rate_lower_bound = np.percentile(null_distribution, 100 * (alpha // 2))
+        null_rate_upper_bound = np.percentile(null_distribution, 100 * (1 - alpha // 2))
 
     statistic = (
         (

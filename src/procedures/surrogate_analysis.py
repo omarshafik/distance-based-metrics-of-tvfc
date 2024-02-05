@@ -72,7 +72,7 @@ def analyze_surrogate_statistics(
         sc_data = tools.sc(emp_data, random=random)
 
     if scc_data is None:
-        scc_data = tools.laumann(emp_data, random=random)
+        scc_data = tools.pr(emp_data, random=random)
 
 
     surrogate_dir = os.path.join(results_dirname, f"{metric_name}-surrogate-analysis")
@@ -380,15 +380,18 @@ def analyze_surrogate_statistics(
             results["sdv_h1h2"].append(sdv_h1h2)
             sdr_h1 = tools.sdr(
                 edge_h1_significance_rate,
-                false_significance_rate
+                false_significance_rate,
+                null_distribution=null_significance_rate
             )
             sdr_h2 = tools.sdr(
                 edge_h2_significance_rate,
-                false_significance_rate
+                false_significance_rate,
+                null_distribution=null_significance_rate
             )
             sdr_h1h2 =  tools.sdr(
                 edge_h1h2_significance_rate,
-                false_significance_rate
+                false_significance_rate,
+                null_distribution=null_significance_rate
             )
             print_info(f"INFO: SDR of H1 (w={window_size}): " + \
                 f"{sdr_h1}", results_dirname)
@@ -401,15 +404,18 @@ def analyze_surrogate_statistics(
             results["sdr_h1h2"].append(sdr_h1h2)
             edr_h1 = tools.edr(
                 edge_h1_significance_rate,
-                false_significance_rate
+                false_significance_rate,
+                null_distribution=null_significance_rate
             )
             edr_h2 = tools.edr(
                 edge_h2_significance_rate,
-                false_significance_rate
+                false_significance_rate,
+                null_distribution=null_significance_rate
             )
             edr_h1h2 =  tools.edr(
                 edge_h1h2_significance_rate,
-                false_significance_rate
+                false_significance_rate,
+                null_distribution=null_significance_rate
             )
             print_info(f"INFO: EDR of H1 (w={window_size}): " + \
                 f"{edr_h1}", results_dirname)

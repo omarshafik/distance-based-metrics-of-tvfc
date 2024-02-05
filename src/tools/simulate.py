@@ -3,6 +3,7 @@ import tools
 
 def sc(
     empirical_data,
+    average_spectrum=True,
     random: np.random.Generator = None):
     """
     Generate spectrally-constrained surrogate data from empirical data.
@@ -23,6 +24,8 @@ def sc(
         random = np.random
     empirical_fft = np.fft.fft(empirical_data, axis=-1)
     empirical_fft_amplitude = np.abs(empirical_fft)
+    if average_spectrum:
+        empirical_fft_amplitude = np.mean(empirical_fft_amplitude, axis=0)
     noise = random.randn(*empirical_data.shape)
     random_phases = np.angle(np.fft.fft(noise))
     simulated_spectrum = empirical_fft_amplitude \
@@ -33,7 +36,7 @@ def sc(
 
 def pr(
     empirical_data,
-    average_spectrum=False,
+    average_spectrum=True,
     random: np.random.Generator = None):
     """
     Generate phase-randomized surrogate data based on the empirical data
@@ -51,7 +54,7 @@ def pr(
     empirical_fft = np.fft.fft(empirical_data, axis=-1)
     empirical_fft_amplitude = np.abs(empirical_fft)
     if average_spectrum:
-        np.mean(empirical_fft_amplitude, axis=0)
+        empirical_fft_amplitude = np.mean(empirical_fft_amplitude, axis=0)
     noise = random.randn(empirical_data.shape[-1])
     random_phases = np.angle(np.fft.fft(noise))
     # random_phases = random.uniform(low=-np.pi, high=np.pi, size=empirical_data.shape[1])
@@ -64,6 +67,7 @@ def pr(
 
 def laumann(
     empirical_data,
+    average_spectrum=True,
     random: np.random.Generator = None):
     """_summary_
 
@@ -75,12 +79,7 @@ def laumann(
     """
     if random is None:
         random = np.random
-    noise = random.randn(*empirical_data.shape)
-    random_phases = np.angle(np.fft.fft(noise))
-    power_spectrum = np.mean(np.abs(np.fft.fft(empirical_data, axis=-1)), axis=0)
-    simulated_spectrum = power_spectrum \
-        * np.exp(1j * random_phases)
-    sc_data = np.fft.ifft(simulated_spectrum, axis=-1).real
+    sc_data = sc(empirical_data, average_spectrum=average_spectrum, random=random)
     emp_cov = np.cov(empirical_data)
     chol_decomposition = np.linalg.cholesky(emp_cov)
     laumann_data = np.dot(chol_decomposition, sc_data)
