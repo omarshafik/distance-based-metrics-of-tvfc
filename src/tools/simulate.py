@@ -3,7 +3,7 @@ import tools
 
 def sc(
     empirical_data,
-    average_spectrum=True,
+    average_spectrum=False,
     random: np.random.Generator = None):
     """
     Generate spectrally-constrained surrogate data from empirical data.
@@ -36,7 +36,7 @@ def sc(
 
 def pr(
     empirical_data,
-    average_spectrum=True,
+    average_spectrum=False,
     random: np.random.Generator = None):
     """
     Generate phase-randomized surrogate data based on the empirical data
@@ -85,3 +85,35 @@ def laumann(
     laumann_data = np.dot(chol_decomposition, sc_data)
     laumann_data = tools.normalized(laumann_data, axis=-1)
     return laumann_data
+
+def pr_new(
+    empirical_data,
+    random: np.random.Generator = None):
+    """
+    Generate phase-randomized surrogate data based on the empirical data
+    by randomizing the phase of the Fourier transform while preserving the amplitude spectrum.
+    Ensures symmetrical phase distribution for real-valued time series data.
+
+    Args:
+        empirical_data (np.ndarray): The empirical time series data as a numpy array.
+
+    Returns:
+        any: MVPR surrogate data
+    """
+    if random is None:
+        random = np.random
+    n_nodes = empirical_data.shape[0]
+    fft = np.fft.fft(empirical_data, axis=-1)
+    fft_amplitude = np.abs(fft)
+    mean_fft_amplitude = np.mean(fft_amplitude, axis=0)
+    cov_fft_amplitude = np.cov(fft_amplitude.T)
+    fft_amplitude_resampled = np.abs(random.multivariate_normal(mean_fft_amplitude, cov_fft_amplitude, n_nodes))
+    noise = random.randn(empirical_data.shape[-1])
+    random_phases = np.angle(np.fft.fft(noise))
+    # random_phases = random.uniform(low=-np.pi, high=np.pi, size=empirical_data.shape[1])
+    fft_phases = np.angle(fft)
+    simulated_spectrum = fft_amplitude_resampled \
+        * np.exp(1j * (fft_phases + random_phases))
+    pr_data = np.fft.ifft(simulated_spectrum, axis=-1).real
+    pr_data = tools.normalized(pr_data, axis=-1)
+    return pr_data

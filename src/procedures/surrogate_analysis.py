@@ -38,9 +38,7 @@ def analyze_surrogate_statistics(
             'filename': [],
             'metric': [],
             'window_size': [],
-            'sdv_h1': [],
-            'sdv_h2': [],
-            'sdv_h1h2': [],
+            'sdv': [],
             'sdr_h1': [],
             'sdr_h2': [],
             'sdr_h1h2': [],
@@ -122,8 +120,12 @@ def analyze_surrogate_statistics(
         pw_estimates_scc = metric(scc_data, 1, pairs=pairs)
 
     if window_sizes is None:
-        window_sizes = [9, 19, 29, 39, 49, 59, 69,
-                        79, 89, 99, emp_data.shape[-1]]
+        if metric_name == "swd":
+            window_sizes = [1, 5, 9, 19, 29, 39, 49, 59, 69,
+                            79, 89, 99, emp_data.shape[-1]]
+        else:
+            window_sizes = [5, 9, 19, 29, 39, 49, 59, 69,
+                            79, 89, 99, emp_data.shape[-1]]
     for window_size in window_sizes:
         print_info(
             f"# window size = {window_size} ####################################################", results_dirname)
@@ -199,6 +201,11 @@ def analyze_surrogate_statistics(
             h1_type1_error_rate = \
                 (total_significance_count - significance_count_h1) / \
                 total_significance_count
+            h1_error_to_chance_ratio = ((
+                1 - np.sum(interest_edges_h1) / estimates_empirical.shape[0]
+            ) - h1_type1_error_rate) / (
+                1 - np.sum(interest_edges_h1) / estimates_empirical.shape[0]
+            )
             print_info(
                 f"INFO: significant edge count of H1: {np.sum(interest_edges_h1)}", results_dirname)
             print_info("INFO: significant tvFC estimates count of H1 " +
@@ -206,6 +213,8 @@ def analyze_surrogate_statistics(
                        f"{significance_count_h1}, {significance_rate_h1}", results_dirname)
             print_info(
                 f"INFO: H1 type 1 error rate: {h1_type1_error_rate}", results_dirname)
+            print_info(
+                f"INFO: H1 type 1 error to chance ratio: {h1_error_to_chance_ratio}", results_dirname)
 
             insig_edge_indices = [
                 i for i, is_edge_significant in enumerate(interest_edges_h1)
@@ -241,12 +250,19 @@ def analyze_surrogate_statistics(
             h2_type1_error_rate = \
                 (total_significance_count - significance_count_h2) / \
                 total_significance_count
+            h2_error_to_chance_ratio = ((
+                1 - np.sum(interest_edges_h2) / estimates_empirical.shape[0]
+            ) - h2_type1_error_rate) / (
+                1 - np.sum(interest_edges_h2) / estimates_empirical.shape[0]
+            )
             print_info(f"INFO: significant edge count of H2 (w={window_size}): " +
                        f"{np.sum(interest_edges_h2)}", results_dirname)
             print_info("INFO: significant tvFC estimates count of H2 (edge variance null): " +
                        f"{significance_count_h2}, {significance_rate_h2}", results_dirname)
             print_info(
                 f"INFO: H2 type 1 error rate (w={window_size}): {h2_type1_error_rate}", results_dirname)
+            print_info(
+                f"INFO: H2 type 1 error to chance ratio: {h2_error_to_chance_ratio}", results_dirname)
 
             insig_edge_indices = [
                 i for i, is_edge_significant in enumerate(interest_edges_h2)
@@ -280,12 +296,19 @@ def analyze_surrogate_statistics(
             all_type1_error_rate = \
                 (total_significance_count - significance_count_h1h2) / \
                 total_significance_count
+            h1h2_error_to_chance_ratio = ((
+                1 - np.sum(interest_edges_h1h2) / estimates_empirical.shape[0]
+            ) - all_type1_error_rate) / (
+                1 - np.sum(interest_edges_h1h2) / estimates_empirical.shape[0]
+            )
             print_info(f"INFO: significant edge count of H1 & H2 (w={window_size}):" +
                        f" {np.sum(interest_edges_h1h2)}", results_dirname)
             print_info("INFO: significant tvFC estimates count of H1 & H2: " +
                        f"{significance_count_h1h2}, {significance_rate_h1h2}", results_dirname)
             print_info(
                 f"INFO: H1 & H2 type 1 error rate (w={window_size}): {all_type1_error_rate}", results_dirname)
+            print_info(
+                f"INFO: H1 & H2 type 1 error to chance ratio: {h1h2_error_to_chance_ratio}", results_dirname)
 
             insig_edge_indices = [
                 i for i, is_edge_significant in enumerate(interest_edges_h1h2)
@@ -329,8 +352,15 @@ def analyze_surrogate_statistics(
                 estimates_empirical[insig_edge_indices]))
             false_positive_count = np.sum(false_significance)
             type_1_error_rate = false_positive_count / total_significance_count
+            error_to_chance_ratio = ((
+                len(insig_edge_indices) / estimates_empirical.shape[0]
+            ) - type_1_error_rate) / (
+                len(insig_edge_indices) / estimates_empirical.shape[0]
+            )
             print_info(
                 f"INFO: Filtered type 1 error rate (w={window_size}): {type_1_error_rate}", results_dirname)
+            print_info(
+                f"INFO: Filtered type 1 error to chance ratio: {error_to_chance_ratio}", results_dirname)
 
             empirical_significance_rate = tools.scaled_significance_rate(
                 estimates_significance
@@ -357,27 +387,13 @@ def analyze_surrogate_statistics(
                     surrogate_dir,
                     f"discriminability-distributions-{window_size}.png"))
 
-            sdv_h1 = tools.sdv(
-                edge_h1_significance_rate,
-                false_significance_rate
+            sdv = tools.sdv(
+                empirical_significance_rate,
+                null_significance_rate
             )
-            sdv_h2 = tools.sdv(
-                edge_h2_significance_rate,
-                false_significance_rate
-            )
-            sdv_h1h2 = tools.sdv(
-                edge_h1h2_significance_rate,
-                false_significance_rate
-            )
-            print_info(f"INFO: SDV of H1 (w={window_size}): " + \
-                f"{sdv_h1}", results_dirname)
-            print_info(f"INFO: SDV of H2 (w={window_size}): " + \
-                f"{sdv_h2}", results_dirname)
-            print_info(f"INFO: SDV of H1 & H2 (w={window_size}): " + \
-                f"{sdv_h1h2}", results_dirname)
-            results["sdv_h1"].append(sdv_h1)
-            results["sdv_h2"].append(sdv_h2)
-            results["sdv_h1h2"].append(sdv_h1h2)
+            print_info(f"INFO: SDV of empirical data (w={window_size}): " + \
+                f"{sdv}", results_dirname)
+            results["sdv"].append(sdv)
             sdr_h1 = tools.sdr(
                 edge_h1_significance_rate,
                 false_significance_rate
@@ -530,9 +546,7 @@ def evaluate_tvfc_metrics(
         'filename': [],
         'metric': [],
         'window_size': [],
-        'sdv_h1': [],
-        'sdv_h2': [],
-        'sdv_h1h2': [],
+        'sdv': [],
         'sdr_h1': [],
         'sdr_h2': [],
         'sdr_h1h2': [],
@@ -562,8 +576,8 @@ def evaluate_tvfc_metrics(
 
         # generate Surrogate data with the same frequency spectrum,
         # autocorrelation, cross-frequency as empirical
-        sc_data = tools.sc(emp_data, random)
-        scc_data = tools.laumann(emp_data, random)
+        sc_data = tools.sc(emp_data, random=random)
+        scc_data = tools.pr(emp_data, random=random)
         for metric_name, metric in metrics.items():
             analyze_surrogate_statistics(
                 emp_data,

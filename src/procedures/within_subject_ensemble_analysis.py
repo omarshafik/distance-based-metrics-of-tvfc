@@ -4,6 +4,7 @@ import os
 from itertools import combinations
 import numpy as np
 import statsmodels.api as sm
+import scipy.stats as stats
 import tools
 from tools import print_info
 
@@ -32,14 +33,20 @@ def analyze_within_subject_ensemble_statistics(
         else:
             metric = tools.swd
     print_info("##########################################################################", results_dirname)
-    print_info(f"INFO: analyzing within-subject {metric_name} ensemble statistics", results_dirname)
+    print_info(f"INFO: analyzing within-subject {metric_name.upper()} ensemble statistics", results_dirname)
     emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
 
-    emp_dir = os.path.join(results_dirname, "within-subject-empirical-ensemble-statistics")
+    emp_dir = os.path.join(results_dirname, f"within-subject-{metric_name}-empirical-ensemble-statistics")
     os.mkdir(emp_dir)
 
     if window_sizes is None:
-        window_sizes = [emp_data.shape[-1]]
+        if metric_name == "swd":
+            window_sizes = [1, 5, 9, 19, 29, 39, 49, 59, 69,
+                            79, 89, 99, emp_data.shape[-1]]
+        else:
+            window_sizes = [5, 9, 19, 29, 39, 49, 59, 69,
+                            79, 89, 99, emp_data.shape[-1]]
+
     for window_size in window_sizes:
         print_info(f"# window size = {window_size} ###############################################", results_dirname)
         # Compute and plot SWD
@@ -82,10 +89,32 @@ def analyze_within_subject_ensemble_statistics(
                 emp_dir,
                 f"global-swd-timeseries-{window_size}.png"))
         # compute and test the stationarity of SWD-based estimates' ensemble parameters
-        mean_stationary_pval = sm.tsa.adfuller(np.mean(estimates, axis=0))[1]
-        var_stationary_pval = sm.tsa.adfuller(np.var(estimates, axis=0))[1]
-        print_info("Stationarity (mean, variance): " + \
-            f"({mean_stationary_pval}, {var_stationary_pval})", results_dirname)
+        session_length = estimates.shape[-1] // 4
+        edgeavg_means_per_session = []
+        edgeavg_variances_per_session = []
+        subsession_length = 200
+        for session in range(4):
+            start = session * session_length
+            end = start + session_length
+            subsession = estimates[:, start:end]
+            edgeavg_means = np.mean(subsession, axis=0)
+            edgeavg_variances = np.var(subsession, axis=0)
+
+            mean_stationary_pval = sm.tsa.adfuller(edgeavg_means)[1]
+            var_stationary_pval = sm.tsa.adfuller(edgeavg_variances)[1]
+            print_info(f"Session {session} Stationarity (mean, variance): " + \
+                f"({mean_stationary_pval}, {var_stationary_pval})", results_dirname)
+
+            subsession_means = tools.sliding_average(edgeavg_means, subsession_length)[::subsession_length]
+            edgeavg_means_per_session.append(subsession_means)
+            subsession_variances = tools.sliding_average(edgeavg_variances, subsession_length)[::subsession_length]
+            edgeavg_variances_per_session.append(subsession_variances)
+
+        means_anova = stats.f_oneway(*edgeavg_means_per_session)
+        variances_anova = stats.f_oneway(*edgeavg_variances_per_session)
+        print_info(F"INFO: Between Sessions ANOVA's statistics for mean parameter: {means_anova}", results_dirname)
+        print_info(F"INFO: Between Sessions ANOVA's statistics for variance parameter: {variances_anova}", results_dirname)
+
         print_info("Distribution stats (skewness, kurtosis): " + \
             f"{tools.test_distribution(estimates)}", results_dirname)
         # End of window size loop

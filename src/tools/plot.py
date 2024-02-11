@@ -306,7 +306,7 @@ def plot_correlation_matrices(
         # Calculate the correlation matrix
         cov_matr = np.corrcoef(timeseries_list[i])
         # Display the correlation matrix with a more scientific colormap (diverging color map)
-        caxi = axi.matshow(cov_matr, cmap='viridis', vmin=-1, vmax=1)
+        caxi = axi.matshow(cov_matr, cmap='seismic', vmin=-1, vmax=1)
         # Add colorbar with a bit of padding for better aesthetics
         fig.colorbar(caxi, ax=axi, fraction=0.046, pad=0.04)
         # Set title with proper padding and font size for clarity

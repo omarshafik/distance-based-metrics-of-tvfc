@@ -18,7 +18,7 @@ def normalized(timeseries_array: np.ndarray, axis: int = -1) -> np.ndarray:
     """
 # normalize array along axis (proovided mean, standard deviation, and axis)
     mean = np.mean(timeseries_array, axis=axis, keepdims=True)
-    std = np.std(timeseries_array, axis=axis, keepdims=True, ddof=1)
+    std = np.std(timeseries_array, axis=axis, keepdims=True)
     demeaned_data = timeseries_array - mean
     return demeaned_data / std
 
@@ -137,7 +137,7 @@ def find_segments(arr: np.ndarray) -> list:
 
     return segments
 
-def prep_emp_data(emp_data, num_sessions = 4):
+def prep_emp_data(emp_data, num_sessions = 4, smooth = 0):
     """ prepare empirical data for tvFC processing
 
     Args:
@@ -154,8 +154,9 @@ def prep_emp_data(emp_data, num_sessions = 4):
         session_end = session_start + session_length
         emp_session_data = emp_data[:, session_start:session_end]
         emp_session_data = normalized(emp_session_data, axis=-1)
-        emp_session_data = sliding_average(emp_session_data, kaiser_beta=5, window_size=5, pad=False)
-        emp_session_data = normalized(emp_session_data, axis=-1)
+        if smooth:
+            emp_session_data = sliding_average(emp_session_data, kaiser_beta=5, window_size=smooth, pad=False)
+            emp_session_data = normalized(emp_session_data, axis=-1)
         if session_idx > 0:
             emp_data_prepped = np.append(emp_data_prepped, emp_session_data, axis=-1)
         else:

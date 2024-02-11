@@ -46,7 +46,8 @@ def test_distribution(data) -> tuple:
 def get_edges_of_interest(
     empirical_measures: np.ndarray,
     surrogate_measures: np.ndarray,
-    alpha: float = 0.0001,
+    alpha: float = 0.05,
+    bonferroni: bool = False,
     one_side: bool = False
 ) -> int:
     """get edges that exhibit properties beyond given surrogate.
@@ -57,7 +58,10 @@ def get_edges_of_interest(
         alpha (float, optional): significance level to use. Defaults to 0.05.
         one_side (bool, optional): carry out one-side hypothesis testing. Defaults to False.
     """
-    edges_of_interest = np.zeros(empirical_measures.shape[0], dtype=int)
+    n_edges = empirical_measures.shape[0]
+    edges_of_interest = np.zeros(n_edges, dtype=int)
+    if bonferroni:
+        alpha = alpha / n_edges
     if not one_side:
         alpha = alpha / 2
         lower_bound = np.percentile(surrogate_measures, 100 * alpha)
@@ -155,43 +159,36 @@ def scaled_significance_rate(
     return rate
 
 def sdv(
-    significance_rate_of_interest: float,
-    false_significance_rate: float):
-    """get the significance rate discriminability (SRD) variance (non-parametric)
+    sr: np.ndarray,
+    null_sr: np.ndarray):
+    """get the significance discriminability variance (SDV)
 
     Args:
         significance_rate_of_interet (float): significance rate of interest edges
         false_significance_rate (float): significance rate of null edges
 
     Returns:
-        float: the significance rate discriminability variance (SRD variance)
+        float: the significance discriminability variance (SDV)
     """
-    statistic = (
-        np.median(significance_rate_of_interest) - np.median(false_significance_rate)
-    ) / (
-        np.percentile(false_significance_rate, 75) - np.median(false_significance_rate)
-    )
+    statistic = np.sum(
+        (sr - np.mean(null_sr)) ** 2
+    ) / (np.size(sr) * np.var(null_sr))
     return statistic
 
 def sdr(
     significance_rate_of_interest: float,
-    false_significance_rate: float,
-    null_distribution: np.ndarray = None,
-    alpha: float = 0.1):
-    """get the significance rate discriminability (SRD) rate
+    false_significance_rate: float):
+    """get the significance discriminability rate (SDR)
 
     Args:
         significance_rate_of_interet (float): significance rate of interest edges
         false_significance_rate (float): significance rate of null edges
 
     Returns:
-        float: the significance rate discriminability rate (SRD rate)
+        float: the significance discriminability rate (SDR)
     """
     null_rate_upper_bound = 1
     null_rate_lower_bound = 1
-    if null_distribution is not None:
-        null_rate_lower_bound = np.percentile(null_distribution, 100 * (alpha // 2))
-        null_rate_upper_bound = np.percentile(null_distribution, 100 * (1 - alpha // 2))
 
     statistic = (
         np.sum(
@@ -206,23 +203,18 @@ def sdr(
 
 def edr(
     significance_rate_of_interest: float,
-    false_significance_rate: float,
-    null_distribution: np.ndarray = None,
-    alpha: float = 0.05):
-    """get the Edge discriminability (ED) rate
+    false_significance_rate: float):
+    """get the Edge discriminability rate (EDR)
 
     Args:
         significance_rate_of_interet (float): significance rate of interest edges
         false_significance_rate (float): significance rate of null edges
 
     Returns:
-        float: the edge discriminability rate (SRD rate)
+        float: the edge discriminability rate (EDR)
     """
     null_rate_upper_bound = 1
     null_rate_lower_bound = 1
-    if null_distribution is not None:
-        null_rate_lower_bound = np.percentile(null_distribution, 100 * (alpha // 2))
-        null_rate_upper_bound = np.percentile(null_distribution, 100 * (1 - alpha // 2))
 
     statistic = (
         (
