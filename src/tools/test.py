@@ -74,6 +74,7 @@ def get_edges_of_interest(
 
 def significant_estimates(
     estimates: np.ndarray,
+    null: np.ndarray = None,
     alpha: float = 0.05,
     mean: float = None,
     std: float = None) -> np.ndarray:
@@ -89,15 +90,20 @@ def significant_estimates(
     Returns:
         list: significance array with equal size to given estimates array
     """
-    if mean is None:
-        mean = np.mean(estimates)
-    if std is None:
-        std = np.std(estimates)
-    lower_bound, upper_bound = stats.norm.interval(
-        (1 - alpha),
-        loc=mean,
-        scale=std
-    )
+    if null:
+        alpha = alpha / 2
+        lower_bound = np.percentile(null, 100 * alpha)
+        upper_bound = np.percentile(null, 100 * (1 - alpha))
+    else:
+        if mean is None:
+            mean = np.mean(estimates)
+        if std is None:
+            std = np.std(estimates)
+        lower_bound, upper_bound = stats.norm.interval(
+            (1 - alpha),
+            loc=mean,
+            scale=std
+        )
     estimates_significance = np.where(
         estimates > upper_bound, 1, 0)
     estimates_significance += np.where(

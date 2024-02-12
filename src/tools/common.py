@@ -137,7 +137,7 @@ def find_segments(arr: np.ndarray) -> list:
 
     return segments
 
-def prep_emp_data(emp_data, num_sessions = 4, smooth = 0):
+def prep_emp_data(emp_data, num_sessions = 4, smooth = 10):
     """ prepare empirical data for tvFC processing
 
     Args:

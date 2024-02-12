@@ -44,7 +44,7 @@ def analyze_metrics_correlation(
     session_length = emp_data.shape[-1] // 4
     emp_data = emp_data[:, 0:session_length]
     pairs = np.array(list(combinations(range(emp_data.shape[0]), 2)))
-    window_sizes = [5, 9, 19, 29, 39, 49, 59, 69, 79, 89, 99, 299, 599, emp_data.shape[-1]]
+    window_sizes = [5, 9, 19, 29, 39, 49, 59, 69, 79, 89, 99, 299, 599]
     for window_size in window_sizes:
         print_info(f"# window size = {window_size} ##########################################", results_dirname)
         significance = {}
@@ -56,18 +56,18 @@ def analyze_metrics_correlation(
         metrics_significance = np.array(list(significance.values()))
         metrics_variance = np.array(list(variance.values()))
         significance_correlations = stats.spearmanr(metrics_significance, axis=1)
-        print_info("INFO: Significance MTD-SWC correlation: " + \
+        print_info("INFO: MTD-SWC Significance correlation: " + \
                     f"{significance_correlations[0][0, 1]}")
-        print_info("INFO: Significance MTD-SWD correlation: " + \
+        print_info("INFO: MTD-SWD Significance correlation: " + \
                     f"{significance_correlations[0][0, 2]}")
-        print_info("INFO: Significance SWC-SWD correlation: " + \
+        print_info("INFO: SWC-SWD Significance correlation: " + \
                     f"{significance_correlations[0][1, 2]}")
-        variance_correlations = np.corrcoef(metrics_variance)
-        print_info("INFO: Variance MTD-SWC correlation: " + \
+        variance_correlations = np.corrcoef(metrics_variance, axis=1)
+        print_info("INFO: MTD-SWC Variance correlation: " + \
                     f"{variance_correlations[0, 1]}")
-        print_info("INFO: Variance MTD-SWD correlation: " + \
+        print_info("INFO: MTD-SWD Variance correlation: " + \
                     f"{variance_correlations[0, 2]}")
-        print_info("INFO: Variance SWC-SWD correlation: " + \
+        print_info("INFO: SWC-SWD Variance correlation: " + \
                     f"{variance_correlations[1, 2]}")
 
     print_info("# session-length window ##########################################", results_dirname)
