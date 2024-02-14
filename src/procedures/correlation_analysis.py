@@ -40,9 +40,11 @@ def analyze_metrics_correlation(
 
     # correlate tvFC significance
     filename = input_filenames[0]
-    emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
+    emp_data = tools.prep_emp_data(np.loadtxt(filename).T, smooth=10)
+    emp_data_no_filter = tools.prep_emp_data(np.loadtxt(filename).T, smooth=0)
     session_length = emp_data.shape[-1] // 4
     emp_data = emp_data[:, 0:session_length]
+    emp_data_no_filter = emp_data_no_filter[:, 0:session_length]
     pairs = np.array(list(combinations(range(emp_data.shape[0]), 2)))
     window_sizes = [5, 9, 19, 29, 39, 49, 59, 69, 79, 89, 99, 299, 599]
     for window_size in window_sizes:
@@ -51,8 +53,23 @@ def analyze_metrics_correlation(
         variance = {}
         for metric_name, metric in metrics.items():
             window_metric_estimates = metric(emp_data, window_size, pairs=pairs)
-            significance[metric_name] = tools.significant_estimates(window_metric_estimates, 0.1).flatten()
+            window_metric_estimates_no_filter = metric(emp_data_no_filter, window_size, pairs=pairs)
+            significance[metric_name] = tools.significant_estimates(window_metric_estimates, 0.08).flatten()
+            window_metric_significance_no_filter = tools.significant_estimates(window_metric_estimates_no_filter, 0.08).flatten()
             variance[metric_name] = np.var(window_metric_estimates, axis=-1).flatten()
+            window_metric_variance_no_filter = np.var(window_metric_estimates_no_filter, axis=-1).flatten()
+            significance_self_correlation = stats.spearmanr(
+                np.array([significance[metric_name], window_metric_significance_no_filter]),
+                axis=1)
+            variance_self_correlation = stats.spearmanr(
+                np.array([variance[metric_name], window_metric_variance_no_filter]),
+                axis=1)
+            print_info(f"INFO: {metric_name.upper()} filter-nofilter Significance correlation: " + \
+                        f"{significance_self_correlation}")
+            print_info(f"INFO: {metric_name.upper()} filter-nofilter Variance correlation: " + \
+                        f"{variance_self_correlation}")
+
+
         metrics_significance = np.array(list(significance.values()))
         metrics_variance = np.array(list(variance.values()))
         significance_correlations = stats.spearmanr(metrics_significance, axis=1)
@@ -62,13 +79,13 @@ def analyze_metrics_correlation(
                     f"{significance_correlations[0][0, 2]}")
         print_info("INFO: SWC-SWD Significance correlation: " + \
                     f"{significance_correlations[0][1, 2]}")
-        variance_correlations = np.corrcoef(metrics_variance, axis=1)
+        variance_correlations = stats.spearmanr(metrics_variance, axis=1)
         print_info("INFO: MTD-SWC Variance correlation: " + \
-                    f"{variance_correlations[0, 1]}")
+                    f"{variance_correlations[0][0, 1]}")
         print_info("INFO: MTD-SWD Variance correlation: " + \
-                    f"{variance_correlations[0, 2]}")
+                    f"{variance_correlations[0][0, 2]}")
         print_info("INFO: SWC-SWD Variance correlation: " + \
-                    f"{variance_correlations[1, 2]}")
+                    f"{variance_correlations[0][1, 2]}")
 
     print_info("# session-length window ##########################################", results_dirname)
     estimates = {
