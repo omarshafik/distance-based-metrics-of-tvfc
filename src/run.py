@@ -68,6 +68,7 @@ os.mkdir(laumann_smooth_surrogates_results_dir)
 
 print_info(f"INFO: Selected file {os.path.basename(file_to_process)}", results_dir)
 print_info(f"INFO: randomization seed: {args.random_seed}", results_dir)
+procedures.generate_illustrations(data_smoothed, random=random, results_dirname=results_dir)
 procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir, random=random)
 procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir, metric_name="swc", random=random)
 # surrogate analysis using PR and unsmoothed empirical data

@@ -26,6 +26,7 @@ def differenced(
     timeseries_array: np.ndarray,
     order: int = 1,
     axis: int = -1,
+    centered: bool = False,
     normalize: bool = False) -> np.ndarray:
     """ Compute the time derivative for the specified order
 
@@ -41,10 +42,15 @@ def differenced(
         np.ndarray: derivative array
     """
     pad_width = [(0, 0)] * timeseries_array.ndim
-    pad_width[axis] = (1, 0)
+    if centered:
+        pad_width[axis] = (1, 1)
+    else:
+        pad_width[axis] = (1, 0)
     derivative = np.pad(timeseries_array, pad_width, mode='edge')
     for _ in range(order):
         derivative = np.diff(derivative, axis=axis)
+        if centered:
+            derivative = sliding_average(derivative, 2, pad=False)
     if normalize:
         return normalized(derivative)
     return derivative
@@ -54,6 +60,7 @@ def sliding_average(
     window_size: int = 5,
     axis: int = -1,
     kaiser_beta: int = 0,
+    integrate: bool = False,
     pad: bool = True) -> np.ndarray:
     """ get sliding average (sequential samples) of given timeseries array
 
@@ -75,7 +82,8 @@ def sliding_average(
     else:
         window = np.ones(window_size)
 
-    window = window / np.sum(window)
+    if not integrate:
+        window = window / np.sum(window)
 
     if pad:
         # Create padding based on the selected axis

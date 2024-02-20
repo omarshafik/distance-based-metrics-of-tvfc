@@ -116,7 +116,7 @@ def swd(
     timeseries = common.normalized(timeseries, axis=-1)
 
     if use_derivative:
-        derivative = common.differenced(timeseries, normalize=True, axis=-1)
+        derivative = common.differenced(timeseries, centered=True, normalize=True, axis=-1)
     else:
         derivative = None
 

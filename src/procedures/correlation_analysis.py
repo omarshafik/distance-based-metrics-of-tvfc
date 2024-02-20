@@ -65,27 +65,27 @@ def analyze_metrics_correlation(
                 np.array([variance[metric_name], window_metric_variance_no_filter]),
                 axis=1)
             print_info(f"INFO: {metric_name.upper()} filter-nofilter Significance correlation: " + \
-                        f"{significance_self_correlation}")
+                        f"{significance_self_correlation}", results_dirname)
             print_info(f"INFO: {metric_name.upper()} filter-nofilter Variance correlation: " + \
-                        f"{variance_self_correlation}")
+                        f"{variance_self_correlation}", results_dirname)
 
 
         metrics_significance = np.array(list(significance.values()))
         metrics_variance = np.array(list(variance.values()))
         significance_correlations = stats.spearmanr(metrics_significance, axis=1)
         print_info("INFO: MTD-SWC Significance correlation: " + \
-                    f"{significance_correlations[0][0, 1]}")
+                    f"{significance_correlations[0][0, 1]}", results_dirname)
         print_info("INFO: MTD-SWD Significance correlation: " + \
-                    f"{significance_correlations[0][0, 2]}")
+                    f"{significance_correlations[0][0, 2]}", results_dirname)
         print_info("INFO: SWC-SWD Significance correlation: " + \
-                    f"{significance_correlations[0][1, 2]}")
+                    f"{significance_correlations[0][1, 2]}", results_dirname)
         variance_correlations = stats.spearmanr(metrics_variance, axis=1)
         print_info("INFO: MTD-SWC Variance correlation: " + \
-                    f"{variance_correlations[0][0, 1]}")
+                    f"{variance_correlations[0][0, 1]}", results_dirname)
         print_info("INFO: MTD-SWD Variance correlation: " + \
-                    f"{variance_correlations[0][0, 2]}")
+                    f"{variance_correlations[0][0, 2]}", results_dirname)
         print_info("INFO: SWC-SWD Variance correlation: " + \
-                    f"{variance_correlations[0][1, 2]}")
+                    f"{variance_correlations[0][1, 2]}", results_dirname)
 
     print_info("# session-length window ##########################################", results_dirname)
     estimates = {
@@ -102,16 +102,16 @@ def analyze_metrics_correlation(
 
     metrics_correlations = np.corrcoef(list(estimates.values()))
     print_info("INFO: MTD-SWC correlation: " + \
-                f"{metrics_correlations[0, 1]}")
+                f"{metrics_correlations[0, 1]}", results_dirname)
     print_info("INFO: MTD-SWD correlation: " + \
-                f"{metrics_correlations[0, 2]}")
+                f"{metrics_correlations[0, 2]}", results_dirname)
     print_info("INFO: SWC-SWD correlation: " + \
-                f"{metrics_correlations[1, 2]}")
+                f"{metrics_correlations[1, 2]}", results_dirname)
 
     metrics_correlations = stats.spearmanr(list(estimates.values()), axis=1)
     print_info("INFO: MTD-SWC Spearman correlation: " + \
-                f"{metrics_correlations[0][0, 1]}")
+                f"{metrics_correlations[0][0, 1]}", results_dirname)
     print_info("INFO: MTD-SWD Spearman correlation: " + \
-                f"{metrics_correlations[0][0, 2]}")
+                f"{metrics_correlations[0][0, 2]}", results_dirname)
     print_info("INFO: SWC-SWD Spearman correlation: " + \
-                f"{metrics_correlations[0][1, 2]}")
+                f"{metrics_correlations[0][1, 2]}", results_dirname)

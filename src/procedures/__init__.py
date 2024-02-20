@@ -12,3 +12,4 @@ from .surrogate_analysis import (
 from .within_subject_sample_analysis import analyze_sample_statistics
 from .between_subjects_ensemble_analysis import analyze_between_subjects_ensemble_statistics
 from .correlation_analysis import analyze_metrics_correlation
+from .illustrations import generate_illustrations

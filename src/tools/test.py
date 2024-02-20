@@ -46,7 +46,7 @@ def test_distribution(data) -> tuple:
 def get_edges_of_interest(
     empirical_measures: np.ndarray,
     surrogate_measures: np.ndarray,
-    alpha: float = 0.05,
+    alpha: float = 0.001,
     bonferroni: bool = False,
     one_side: bool = False
 ) -> int:
