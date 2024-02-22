@@ -3,8 +3,11 @@
 """
 import os
 import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy as np
+import pandas as pd
 from tools.common import sliding_average
+import tools
 plt.style.use('seaborn-v0_8-whitegrid')
 
 
@@ -113,12 +116,13 @@ def generate_illustrations(
     abs_distances_derivative = np.abs(dy1 - dy2)
 
     # Calculate average distances
-    average_distances = (abs_distances_amplitude + abs_distances_derivative) / 2
+    # expanded_distances = (abs_distances_amplitude + abs_distances_derivative) / 2
+    expanded_distances = np.sqrt(abs_distances_amplitude ** 2 + abs_distances_derivative ** 2)
 
     ax = plt.subplot(aspect='equal')
     ax.plot(x, abs_distances_amplitude, label='Amplitude Distance', color='blue')
     ax.plot(x, abs_distances_derivative, label='Derivative Distance', color='green')
-    ax.plot(x, average_distances, label='Average Distance', color='red')
+    ax.plot(x, expanded_distances, label='Expanded Distance', color='red')
     ax.set_xlabel('Time')
     ax.set_ylabel('Distance')
     ax.set_ylim([0, 2.5])
@@ -139,13 +143,13 @@ def generate_illustrations(
     x_min_log = np.exp(-1 * y_min)  # Convert y_min back to x range for logarithmic function
     x_max_log = np.exp(-1 * y_max)  # Convert y_max back to x range for logarithmic function
 
-    log_transformed_values_inverted = -1 * np.log(average_distances)
+    log_transformed_values_inverted = -1 * np.log(expanded_distances)
     log_x_range_adjusted = np.linspace(x_min_log, x_max_log, 500)  # Adjusted x range for logarithmic function
     log_y_range_adjusted = np.log(log_x_range_adjusted)  # Calculating log values for the adjusted x range
     plt.plot(log_x_range_adjusted, -1 * log_y_range_adjusted, color='blue')
-    plt.scatter(average_distances, log_transformed_values_inverted, color='red', s=10)
-    plt.xlabel('Mean Distance')
-    plt.ylabel('Inverted Log (Mean Distance)')
+    plt.scatter(expanded_distances, log_transformed_values_inverted, color='red', s=10)
+    plt.xlabel('Expanded Distance')
+    plt.ylabel('Inverse Log of Expanded Distance')
 
     plt.tight_layout()
     if results_dirname is None:
@@ -155,18 +159,11 @@ def generate_illustrations(
         plt.savefig(figpath, transparent=True)
         plt.close()
 
-    # Function for applying sliding window average
-    sampling_rate = len(x) / (2 * np.pi)
-    # def sliding_window_average(signal, window_size_seconds):
-    #     window_size_samples = int(window_size_seconds * sampling_rate)
-    #     window = np.ones(window_size_samples) / window_size_samples
-    #     return np.convolve(signal, window, mode='valid')
-
-    # Sliding window sizes in seconds
-    window_sizes = [1 / sampling_rate, 1, 3]
 
     # New figure for sliding window averages
     plt.figure()
+    sampling_rate = len(x) / (2 * np.pi)
+    window_sizes = [1 / sampling_rate, 1, 3]
     ax = plt.subplot(aspect='equal')
     for i, window_size in enumerate(window_sizes):
         window_size_samples = int(window_size * sampling_rate)
@@ -202,5 +199,25 @@ def generate_illustrations(
         plt.show()
     else:
         figpath = os.path.join(illustrations_dir, "empirical-signals.png")
+        plt.savefig(figpath, transparent=True)
+        plt.close()
+
+    # generate violin plots of SWD distributions
+    fig, ax = plt.subplots()
+    window_sizes = [9, 19, 29, 39, 49, 99]
+    timepoint_samples = random.choice(data.shape[-1] - window_sizes[-1], 200, replace=False)
+    swd_per_window_size = [tools.swd(data[:,timepoint_samples], window_size).flatten() for window_size in window_sizes]
+    window_size_labels = [str(window_size) for window_size in window_sizes]
+    quantiles = [[0, 0.25, 0.5, 0.75, 1] for _ in window_sizes]
+    ax.violinplot(swd_per_window_size, quantiles=quantiles, showextrema=False)
+    ax.set_xticks(np.arange(1, len(window_size_labels) + 1))
+    ax.set_xticklabels(window_size_labels)
+    ax.set_xlabel('Window Size')
+    ax.set_ylabel('SWD')
+
+    if results_dirname is None:
+        plt.show()
+    else:
+        figpath = os.path.join(illustrations_dir, "empirical-swd.png")
         plt.savefig(figpath, transparent=True)
         plt.close()

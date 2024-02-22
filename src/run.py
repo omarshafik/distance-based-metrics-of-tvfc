@@ -56,15 +56,7 @@ if outdir is None:
 if not os.path.isdir(outdir):
     os.mkdir(outdir)
 results_dir = os.path.join(outdir, TIMESTAMP)
-pr_surrogates_results_dir = os.path.join(results_dir, "pr")
-pr_smooth_surrogates_results_dir = os.path.join(results_dir, "pr-smoothed")
-laumann_surrogates_results_dir = os.path.join(results_dir, "laumann")
-laumann_smooth_surrogates_results_dir = os.path.join(results_dir, "laumann-smoothed")
 os.mkdir(results_dir)
-os.mkdir(pr_surrogates_results_dir)
-os.mkdir(pr_smooth_surrogates_results_dir)
-os.mkdir(laumann_surrogates_results_dir)
-os.mkdir(laumann_smooth_surrogates_results_dir)
 
 print_info(f"INFO: Selected file {os.path.basename(file_to_process)}", results_dir)
 print_info(f"INFO: randomization seed: {args.random_seed}", results_dir)
@@ -72,6 +64,8 @@ procedures.generate_illustrations(data_smoothed, random=random, results_dirname=
 procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir, random=random)
 procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir, metric_name="swc", random=random)
 # surrogate analysis using PR and unsmoothed empirical data
+pr_surrogates_results_dir = os.path.join(results_dir, "pr")
+os.mkdir(pr_surrogates_results_dir)
 procedures.analyze_surrogate_statistics(
     data,
     pr_surrogates_results_dir,
@@ -93,6 +87,8 @@ procedures.analyze_surrogate_statistics(
     scc_data=pr_data,
     random=random)
 # surrogate analysis using PR and smoothed empirical data
+pr_smooth_surrogates_results_dir = os.path.join(results_dir, "pr-smoothed")
+os.mkdir(pr_smooth_surrogates_results_dir)
 procedures.analyze_surrogate_statistics(
     data_smoothed,
     pr_smooth_surrogates_results_dir,
@@ -114,6 +110,8 @@ procedures.analyze_surrogate_statistics(
     scc_data=pr_data_smoothed,
     random=random)
 # surrogate analysis using Laumann and unsmoothed empirical data
+laumann_surrogates_results_dir = os.path.join(results_dir, "laumann")
+os.mkdir(laumann_surrogates_results_dir)
 procedures.analyze_surrogate_statistics(
     data,
     laumann_surrogates_results_dir,
@@ -135,6 +133,8 @@ procedures.analyze_surrogate_statistics(
     scc_data=laumann_data,
     random=random)
 # surrogate analysis using Laumann and smoothed empirical data
+laumann_smooth_surrogates_results_dir = os.path.join(results_dir, "laumann-smoothed")
+os.mkdir(laumann_smooth_surrogates_results_dir)
 procedures.analyze_surrogate_statistics(
     data_smoothed,
     laumann_smooth_surrogates_results_dir,

@@ -14,9 +14,11 @@ def swd_no_parallel(
     use_derivative: bool = True,
     use_actual: bool = True,
     transform: bool = True,
+    distance: str = "euclidean",
     scale: float = 1,
     safe_guard: int = 0,
     kaiser_beta: int = 0,
+    pad: bool = False,
     pairs: np.ndarray = None) -> np.ndarray:
     """ compute TVC estimate from fMRI signals using distance-based approach
 
@@ -58,7 +60,10 @@ def swd_no_parallel(
         if use_actual is False:
             distance_ts = distance_diff_ts
         else:
-            distance_ts = (distance_ts + distance_diff_ts) / 2
+            if distance == "euclidean":
+                distance_ts = np.sqrt(distance_ts ** 2 + distance_diff_ts ** 2)
+            else:
+                distance_ts = (distance_ts + distance_diff_ts) / 2
 
     distance_ts = distance_ts / scale
 
@@ -67,11 +72,11 @@ def swd_no_parallel(
     #  - allow distance-based values to change on a continous scale (-inf,+inf)
     #  - decrease distribution skewness
     if transform:
-        distance_ts = -1 * np.log10(distance_ts + safe_guard)
+        distance_ts = -1 * np.log2(distance_ts + safe_guard)
 
     # get sliding window average (sample mean) values over the given window (sample) size
     sampled_distance_ts = common.sliding_average(
-        distance_ts, window_size=window_size, kaiser_beta=kaiser_beta, pad=False)
+        distance_ts, window_size=window_size, kaiser_beta=kaiser_beta, pad=pad)
 
     return sampled_distance_ts
 

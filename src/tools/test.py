@@ -90,7 +90,7 @@ def significant_estimates(
     Returns:
         list: significance array with equal size to given estimates array
     """
-    if null:
+    if null is not None:
         alpha = alpha / 2
         lower_bound = np.percentile(null, 100 * alpha)
         upper_bound = np.percentile(null, 100 * (1 - alpha))
