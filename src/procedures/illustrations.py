@@ -41,18 +41,6 @@ def generate_illustrations(
         center_index = intersections[0]
         start_index = max(center_index - 10, 0)
         end_index = min(center_index + 10, len(x) - 1)
-        # zoom_range_x = [x[start_index], x[end_index]]
-        # zoom_range_y = [
-        #     min(y1[start_index:end_index].min(), y2[start_index:end_index].min()),
-        #     max(y1[start_index:end_index].max(), y2[start_index:end_index].max())]
-
-        # # Draw a rectangle around the zoomed-in area on the zoomed-out plot
-        # rect = plt.Rectangle(
-        #     (zoom_range_x[0], zoom_range_y[0]),
-        #     zoom_range_x[1]-zoom_range_x[0],
-        #     zoom_range_y[1]-zoom_range_y[0],
-        #     linewidth=1, edgecolor='r', facecolor='none')
-        # ax.add_patch(rect)
 
     if results_dirname is None:
         plt.show()
@@ -135,58 +123,7 @@ def generate_illustrations(
         plt.savefig(figpath, transparent=True)
         plt.close()
 
-    plt.subplot(aspect='equal')
-    plt.xlim(0, 4)
-    plt.ylim(-2, 2)
-    # Invert the log-transformed values by multiplying by -1
-    y_min, y_max = -2, 2
-    x_min_log = np.exp(-1 * y_min)  # Convert y_min back to x range for logarithmic function
-    x_max_log = np.exp(-1 * y_max)  # Convert y_max back to x range for logarithmic function
 
-    log_transformed_values_inverted = -1 * np.log(expanded_distances)
-    log_x_range_adjusted = np.linspace(x_min_log, x_max_log, 500)  # Adjusted x range for logarithmic function
-    log_y_range_adjusted = np.log(log_x_range_adjusted)  # Calculating log values for the adjusted x range
-    plt.plot(log_x_range_adjusted, -1 * log_y_range_adjusted, color='blue')
-    plt.scatter(expanded_distances, log_transformed_values_inverted, color='red', s=10)
-    plt.xlabel('Expanded Distance')
-    plt.ylabel('Inverse Log of Expanded Distance')
-
-    plt.tight_layout()
-    if results_dirname is None:
-        plt.show()
-    else:
-        figpath = os.path.join(illustrations_dir, "log-distances.png")
-        plt.savefig(figpath, transparent=True)
-        plt.close()
-
-
-    # New figure for sliding window averages
-    plt.figure()
-    sampling_rate = len(x) / (2 * np.pi)
-    window_sizes = [1 / sampling_rate, 1, 3]
-    ax = plt.subplot(aspect='equal')
-    for i, window_size in enumerate(window_sizes):
-        window_size_samples = int(window_size * sampling_rate)
-        smoothed_distances = sliding_average(log_transformed_values_inverted, window_size_samples, kaiser_beta=5)
-        if i == 0:
-            label = "point-wise"
-        else:
-            label = f'{window_size} seconds window'
-        ax.plot(x[:len(smoothed_distances)], smoothed_distances, label=label)
-
-    ax.set_ylim([0, 2.5])
-    ax.set_xlabel('Time')
-    ax.set_ylabel('Distance')
-    ax.legend()
-
-    # Save or display the figure
-    if results_dirname is None:
-        plt.show()
-    else:
-        figpath = os.path.join(illustrations_dir, "sliding-window-distances.png")
-        plt.savefig(figpath, transparent=True)
-        plt.close()
-    
     plt.figure()
     # Assuming x is common for all signals in `data`
     x = np.linspace(0, 2*np.pi, 100)  # Assuming data.shape[1] matches the length of the x-axis data
