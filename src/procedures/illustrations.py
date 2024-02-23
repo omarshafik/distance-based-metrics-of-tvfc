@@ -108,6 +108,7 @@ def generate_illustrations(
     # expanded_distances = (abs_distances_amplitude + abs_distances_derivative) / 2
     expanded_distances = np.sqrt(abs_distances_amplitude ** 2 + abs_distances_derivative ** 2)
 
+    # Distance-based estimates
     ax = plt.subplot(aspect='equal')
     ax.plot(x, abs_distances_amplitude, label='Amplitude Distance', color='blue')
     ax.plot(x, abs_distances_derivative, label='Derivative Distance', color='green')
@@ -124,7 +125,7 @@ def generate_illustrations(
         plt.savefig(figpath, transparent=True)
         plt.close()
 
-
+    # plot selected empirical signals
     plt.figure()
     # Assuming x is common for all signals in `data`
     x = np.linspace(0, 2*np.pi, 100)  # Assuming data.shape[1] matches the length of the x-axis data
@@ -137,26 +138,6 @@ def generate_illustrations(
         plt.show()
     else:
         figpath = os.path.join(illustrations_dir, "empirical-signals.png")
-        plt.savefig(figpath, transparent=True)
-        plt.close()
-
-    # generate violin plots of SWD distributions
-    fig, ax = plt.subplots()
-    window_sizes = [9, 19, 29, 39, 49, 99]
-    timepoint_samples = random.choice(data.shape[-1] - window_sizes[-1], 400, replace=False)
-    swd_per_window_size = [tools.swd(data[:,timepoint_samples], window_size).flatten() for window_size in window_sizes]
-    window_size_labels = [str(window_size) for window_size in window_sizes]
-    quantiles = [[0, 0.25, 0.5, 0.75, 1] for _ in window_sizes]
-    ax.violinplot(swd_per_window_size, quantiles=quantiles, showextrema=False)
-    ax.set_xticks(np.arange(1, len(window_size_labels) + 1))
-    ax.set_xticklabels(window_size_labels)
-    ax.set_xlabel('Window Size')
-    ax.set_ylabel('SWD')
-
-    if results_dirname is None:
-        plt.show()
-    else:
-        figpath = os.path.join(illustrations_dir, "empirical-swd.png")
         plt.savefig(figpath, transparent=True)
         plt.close()
 
@@ -322,8 +303,8 @@ def generate_illustrations(
 
 
     swd_data = {
-        'Value': [],
-        'Condition': [],
+        'SWD': [],
+        'Edges': [],
         'Window Size': []
     }
     window_sizes = [9, 19, 29, 39, 99]
@@ -354,17 +335,41 @@ def generate_illustrations(
 
         null_swd = empirical_swd[null_edges][:, timepoint_samples].flatten()
         empirical_swd = empirical_swd[:, timepoint_samples].flatten()
-        swd_data['Value'].extend(empirical_swd.tolist() + null_swd.tolist())
-        swd_data['Condition'].extend(['All'] * len(empirical_swd) + ['Null'] * len(null_swd))
+        swd_data['SWD'].extend(empirical_swd.tolist() + null_swd.tolist())
+        swd_data['Edges'].extend(['All'] * len(empirical_swd) + ['Null'] * len(null_swd))
         swd_data['Window Size'].extend([ws] * (len(empirical_swd) + len(null_swd)))
 
     df = pd.DataFrame.from_dict(swd_data)
 
-    sns.violinplot(data=df, x='Window Size', y='Value', hue='Condition', split=True, gap=.1, inner='quart', palette={'All': 'skyblue', 'Null': 'lightcoral'})
+    sns.violinplot(data=df, x='Window Size', y='SWD', hue='Edges', split=True, gap=.1, inner='quart', palette={'All': 'skyblue', 'Null': 'lightcoral'})
 
     if results_dirname is None:
         plt.show()
     else:
-        figpath = os.path.join(illustrations_dir, "empirical-swd.png")
+        figpath = os.path.join(illustrations_dir, "empirical-null-distributions.png")
+        plt.savefig(figpath, transparent=True)
+        plt.close()
+
+    swd_data = {
+        'SWD': [],
+        'Window Size': []
+    }
+    window_sizes = [9, 19, 29, 39, 99]
+
+    timepoint_samples = random.choice(data.shape[-1] - window_sizes[-1], 400, replace=False)
+    for ws in window_sizes:
+        empirical_swd = tools.swd(data, ws)
+        empirical_swd = empirical_swd[:, timepoint_samples].flatten()
+        swd_data['SWD'].extend(empirical_swd.tolist())
+        swd_data['Window Size'].extend([ws] * len(empirical_swd))
+
+    df = pd.DataFrame.from_dict(swd_data)
+
+    sns.violinplot(data=df, x='Window Size', y='SWD', inner='quart', color='skyblue')
+
+    if results_dirname is None:
+        plt.show()
+    else:
+        figpath = os.path.join(illustrations_dir, "swd-distributions.png")
         plt.savefig(figpath, transparent=True)
         plt.close()
