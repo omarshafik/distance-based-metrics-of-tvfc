@@ -2,6 +2,7 @@
     Mostly implemented by ChatGPT 4
 """
 import os
+from itertools import combinations
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
@@ -130,7 +131,7 @@ def generate_illustrations(
     # Plotting selected signals
     nodes = random.choice(data.shape[0], size=10, replace=False)
     for node in nodes:  # Plot up to 10 signals
-        plt.plot(x, data[node, 2000:2100])
+        plt.plot(x, data[node, 500:600])
 
     if results_dirname is None:
         plt.show()
@@ -142,7 +143,7 @@ def generate_illustrations(
     # generate violin plots of SWD distributions
     fig, ax = plt.subplots()
     window_sizes = [9, 19, 29, 39, 49, 99]
-    timepoint_samples = random.choice(data.shape[-1] - window_sizes[-1], 200, replace=False)
+    timepoint_samples = random.choice(data.shape[-1] - window_sizes[-1], 400, replace=False)
     swd_per_window_size = [tools.swd(data[:,timepoint_samples], window_size).flatten() for window_size in window_sizes]
     window_size_labels = [str(window_size) for window_size in window_sizes]
     quantiles = [[0, 0.25, 0.5, 0.75, 1] for _ in window_sizes]
@@ -151,6 +152,215 @@ def generate_illustrations(
     ax.set_xticklabels(window_size_labels)
     ax.set_xlabel('Window Size')
     ax.set_ylabel('SWD')
+
+    if results_dirname is None:
+        plt.show()
+    else:
+        figpath = os.path.join(illustrations_dir, "empirical-swd.png")
+        plt.savefig(figpath, transparent=True)
+        plt.close()
+
+    # create tvFC edges plot for all edges
+    window_size = 29
+    edge_time_series = tools.swd(data, window_size=window_size)
+    edge_significance = tools.significant_estimates(edge_time_series)
+    # Determine global color scale across multiple datasets
+    sns.heatmap(edge_significance, cmap="seismic", cbar=False, xticklabels=False, yticklabels=False)
+    plt.xlabel('Time')
+    plt.ylabel('Edge')
+
+    if results_dirname is None:
+        plt.show()
+    else:
+        figpath = os.path.join(illustrations_dir, "edge-timeseries.png")
+        plt.savefig(figpath, transparent=True, dpi=1200)
+        plt.close()
+
+    # create edges plot for significant time-averaged FC
+    sc_data = tools.sc(data, random)
+    timeavg_estimates_empirical = tools.swd(data, data.shape[-1])
+    timeavg_estimates_sc = tools.swd(sc_data, sc_data.shape[-1])
+    h1_edges_of_interest = tools.get_edges_of_interest(
+        timeavg_estimates_empirical,
+        timeavg_estimates_sc
+    )
+    h1_edges = [
+        i for i, is_edge_significant in enumerate(h1_edges_of_interest)
+        if is_edge_significant]
+    sns.heatmap(edge_significance[h1_edges], cmap="seismic", cbar=False, xticklabels=False, yticklabels=False)
+    plt.xlabel('Time')
+    plt.ylabel('Edge')
+
+    if results_dirname is None:
+        plt.show()
+    else:
+        figpath = os.path.join(illustrations_dir, "edge-timeseries-h1.png")
+        plt.savefig(figpath, transparent=True, dpi=1200)
+        plt.close()
+
+
+    # create edges plot for significant edge variance
+    scc_data = tools.laumann(data, random)
+    scc_edge_time_series = tools.swd(scc_data, window_size=window_size)
+    h2_edges_of_interest = tools.get_edges_of_interest(
+        np.var(edge_time_series, axis=-1),
+        np.var(scc_edge_time_series, axis=-1),
+        one_side=True
+    )
+    h2_edges = [
+        i for i, is_edge_significant in enumerate(h2_edges_of_interest)
+        if is_edge_significant]
+    sns.heatmap(edge_significance[h2_edges], cmap="seismic", cbar=False, xticklabels=False, yticklabels=False)
+    plt.xlabel('Time')
+    plt.ylabel('Edge')
+
+    if results_dirname is None:
+        plt.show()
+    else:
+        figpath = os.path.join(illustrations_dir, "edge-timeseries-h2.png")
+        plt.savefig(figpath, transparent=True, dpi=1200)
+        plt.close()
+
+
+    # create edges plot for null edges
+    h1h2_edges_of_interest = h1_edges_of_interest + h2_edges_of_interest
+    h1h2_edges_of_interest[h1h2_edges_of_interest != 0] = 1
+    null_edges = [
+        i for i, is_edge_significant in enumerate(h1h2_edges_of_interest)
+        if not is_edge_significant]
+    sns.heatmap(edge_significance[null_edges], cmap="seismic", cbar=False, xticklabels=False, yticklabels=False)
+    plt.xlabel('Time')
+    plt.ylabel('Edge')
+
+    if results_dirname is None:
+        plt.show()
+    else:
+        figpath = os.path.join(illustrations_dir, "edge-timeseries-null.png")
+        plt.savefig(figpath, transparent=True, dpi=1200)
+        plt.close()
+
+    h1h2_edges = [
+        i for i, is_edge_significant in enumerate(h1h2_edges_of_interest)
+        if is_edge_significant]
+    sns.heatmap(edge_significance[h1h2_edges], cmap="seismic", cbar=False, xticklabels=False, yticklabels=False)
+    plt.xlabel('Time')
+    plt.ylabel('Edge')
+
+    if results_dirname is None:
+        plt.show()
+    else:
+        figpath = os.path.join(illustrations_dir, "edge-timeseries-h1h2.png")
+        plt.savefig(figpath, transparent=True, dpi=1200)
+        plt.close()
+
+    edge_significance = tools.significant_estimates(edge_time_series, null=edge_time_series[null_edges])
+    # Determine global color scale across multiple datasets
+    sns.heatmap(edge_significance, cmap="seismic", cbar=False, xticklabels=False, yticklabels=False)
+    plt.xlabel('Time')
+    plt.ylabel('Edge')
+
+    if results_dirname is None:
+        plt.show()
+    else:
+        figpath = os.path.join(illustrations_dir, "edge-timeseries-filtered.png")
+        plt.savefig(figpath, transparent=True, dpi=1200)
+        plt.close()
+
+    # nodewise power spectra
+    empirical_data = data[:, 0:500]
+    empirical_fft = np.fft.rfft(empirical_data, axis=-1)
+    empirical_fft_amplitude = np.abs(empirical_fft)
+    empirical_freqs = np.fft.rfftfreq(empirical_data.shape[-1], 0.72)
+
+    # Filter frequencies and corresponding amplitudes to include only 0 to 0.3 Hz
+    mask = (empirical_freqs >= 0) & (empirical_freqs <= 0.3)
+    filtered_freqs = empirical_freqs[mask]
+    filtered_amplitudes = empirical_fft_amplitude[:, mask]
+
+    sns.heatmap(filtered_amplitudes, cmap="seismic", cbar=False, xticklabels=False, yticklabels=False)
+    # Adjusting x-ticks to show frequency values
+    nticks = 6
+    tick_positions = np.linspace(0, len(filtered_freqs) - 1, nticks, dtype=int)
+    tick_labels = [f"{filtered_freqs[pos]:.2f}" for pos in tick_positions]
+    plt.xticks(tick_positions + 0.5, tick_labels, fontsize=10, rotation=45)
+
+    plt.xlabel('Frequency')
+    plt.ylabel('Node')
+
+    if results_dirname is None:
+        plt.show()
+    else:
+        figpath = os.path.join(illustrations_dir, "node-power-spectra.png")
+        plt.savefig(figpath, transparent=True, dpi=600)
+        plt.close()
+
+    # covariance plots
+    plt.figure()
+    covariance = np.cov(data)
+    sns.heatmap(covariance, cmap="seismic", cbar=False, xticklabels=False, yticklabels=False, square=True)
+    plt.xlabel('Node')
+    plt.ylabel('Node')
+
+    if results_dirname is None:
+        plt.show()
+    else:
+        figpath = os.path.join(illustrations_dir, "covariance.png")
+        plt.savefig(figpath, transparent=True, dpi=600)
+        plt.close()
+
+    # create node time series plot
+    sns.heatmap(data, cmap="seismic", cbar=False, xticklabels=False, yticklabels=False)
+    plt.xlabel('Time')
+    plt.ylabel('Node')
+
+    if results_dirname is None:
+        plt.show()
+    else:
+        figpath = os.path.join(illustrations_dir, "node-timeseries.png")
+        plt.savefig(figpath, transparent=True, dpi=1200)
+        plt.close()
+
+
+    swd_data = {
+        'Value': [],
+        'Condition': [],
+        'Window Size': []
+    }
+    window_sizes = [9, 19, 29, 39, 99]
+
+    sc_data = tools.sc(data, random)
+    timeavg_estimates_empirical = tools.swd(data, data.shape[-1])
+    timeavg_estimates_sc = tools.swd(sc_data, sc_data.shape[-1])
+    h1_edges_of_interest = tools.get_edges_of_interest(
+        timeavg_estimates_empirical,
+        timeavg_estimates_sc
+    )
+
+    scc_data = tools.laumann(data, random)
+    timepoint_samples = random.choice(data.shape[-1] - window_sizes[-1], 400, replace=False)
+    for ws in window_sizes:
+        empirical_swd = tools.swd(data, ws)
+        scc_edge_time_series = tools.swd(scc_data, window_size=ws)
+        h2_edges_of_interest = tools.get_edges_of_interest(
+            np.var(empirical_swd, axis=-1),
+            np.var(scc_edge_time_series, axis=-1),
+            one_side=True
+        )
+        h1h2_edges_of_interest = h1_edges_of_interest + h2_edges_of_interest
+        h1h2_edges_of_interest[h1h2_edges_of_interest != 0] = 1
+        null_edges = [
+            i for i, is_edge_significant in enumerate(h1h2_edges_of_interest)
+            if not is_edge_significant]
+
+        null_swd = empirical_swd[null_edges][:, timepoint_samples].flatten()
+        empirical_swd = empirical_swd[:, timepoint_samples].flatten()
+        swd_data['Value'].extend(empirical_swd.tolist() + null_swd.tolist())
+        swd_data['Condition'].extend(['All'] * len(empirical_swd) + ['Null'] * len(null_swd))
+        swd_data['Window Size'].extend([ws] * (len(empirical_swd) + len(null_swd)))
+
+    df = pd.DataFrame.from_dict(swd_data)
+
+    sns.violinplot(data=df, x='Window Size', y='Value', hue='Condition', split=True, gap=.1, inner='quart', palette={'All': 'skyblue', 'Null': 'lightcoral'})
 
     if results_dirname is None:
         plt.show()
