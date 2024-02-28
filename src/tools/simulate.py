@@ -138,3 +138,10 @@ def bioplausible(emp_data, phase_lag = 0, noise_level = 0.5, length: int = -1):
     signal = tools.normalized(np.fft.ifft(complex_spectrum, axis=-1).real[500:-500])[0:length]
     noise = np.random.normal(scale=noise_level, size=signal.shape[-1])
     return tools.normalized(signal + noise)
+
+def sinusoid(length=900, freq=0.01, phase_shift=0, repition_rate=1.2):
+    """
+    Generate a simulated time-series signal with specified parameters.
+    """
+    t = np.arange(0, length*repition_rate, repition_rate)
+    return np.sin(2 * np.pi * freq * t + phase_shift)
