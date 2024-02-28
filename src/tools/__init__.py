@@ -4,7 +4,7 @@ imports module
 from .analyze import *
 from .common import (
     normalized,
-    differenced,
+    derivative,
     sliding_average,
     pad_timeseries,
     prep_emp_data,

@@ -22,11 +22,10 @@ def normalized(timeseries_array: np.ndarray, axis: int = -1) -> np.ndarray:
     demeaned_data = timeseries_array - mean
     return demeaned_data / std
 
-def differenced(
+def derivative(
     timeseries_array: np.ndarray,
     order: int = 1,
     axis: int = -1,
-    centered: bool = False,
     normalize: bool = False) -> np.ndarray:
     """ Compute the time derivative for the specified order
 
@@ -41,19 +40,10 @@ def differenced(
     Returns:
         np.ndarray: derivative array
     """
-    pad_width = [(0, 0)] * timeseries_array.ndim
-    if centered:
-        pad_width[axis] = (1, 1)
-    else:
-        pad_width[axis] = (1, 0)
-    derivative = np.pad(timeseries_array, pad_width, mode='edge')
-    for _ in range(order):
-        derivative = np.diff(derivative, axis=axis)
-        if centered:
-            derivative = sliding_average(derivative, 2, pad=False)
+    derivative_ts = np.gradient(timeseries_array, axis=axis, edge_order=order)
     if normalize:
-        return normalized(derivative)
-    return derivative
+        return normalized(derivative_ts, axis=axis)
+    return derivative_ts
 
 def sliding_average(
     timeseries_array: np.ndarray,

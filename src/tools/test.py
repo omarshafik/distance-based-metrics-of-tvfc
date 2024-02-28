@@ -61,7 +61,7 @@ def get_edges_of_interest(
     n_edges = empirical_measures.shape[0]
     edges_of_interest = np.zeros(n_edges, dtype=int)
     if bonferroni:
-        alpha = alpha / n_edges
+        alpha = alpha / 4  # divide by the number of sessions
     if not one_side:
         alpha = alpha / 2
         lower_bound = np.percentile(surrogate_measures, 100 * alpha)
