@@ -34,5 +34,6 @@ from .simulate import (
     sc,
     pr,
     laumann,
-    bioplausible
+    bioplausible,
+    sinusoid
 )

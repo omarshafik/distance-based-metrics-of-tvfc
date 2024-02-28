@@ -26,41 +26,44 @@ def simulatiom_benchmark(
     if not os.path.exists(benchmark_dir):
         os.mkdir(benchmark_dir)
 
-    #{window sizes 1 to 200 with :2}
-    window_sizes = list(range(1 , 50 , 2))
-
+    #{plot windows 9 to 99 :10}
+    window_sizes = [9, 29, 49, 69]
   
     #{Phase shifts pi/16 to pi : pi/32}
     pi = np.pi
-    phase_shift = pi / 32
     phases = np.linspace(pi / 16 , pi , num = 32)
-    #{plot windows 9 to 99 :10}
+    frequencies = np.linspace(0.01, 0.1, num = 10)
 
     #Loop over noise level
-    empirical_pw_estimates = tools.swd(emp_data, 1)
-    phase_window_significance_rate = np.array([])
-    for phase in phases:
-        window_significance_rate = np.array([])
-        #Loop over window size
-        for window_size in window_sizes:
-            empirical_estimates = tools.sliding_average(empirical_pw_estimates, window_size)
-            bioplausible_signal = tools.bioplausible(emp_data, phase, 0 , 500)
-            #Compute signal estimates
-            bioplausible_estimates = tools.swd(bioplausible_signal, window_size)
-            #Compute significance of signal estimates(from empirical parameters)
-            bioplausible_significance = np.abs(tools.significant_estimates(
-                bioplausible_estimates,
-                mean=np.mean(empirical_estimates),
-                std=np.std(empirical_estimates)
-            ))
-            bioplausible_significance_rate = np.sum(
-                bioplausible_significance
-            ) / np.size(bioplausible_significance)
-            window_significance_rate = np.append(window_significance_rate , bioplausible_significance_rate)
-        phase_window_significance_rate = np.append( phase_window_significance_rate , window_significance_rate)
-    sns.heatmap(phase_window_significance_rate , xticklabels = "Window Size" , yticklabels = "Phase  Shift")
-    sns.color_palette("YlOrBr", as_cmap=True)
-    plt.show()
+    
+    for window_size in window_sizes:
+        phase_frequency_significance_rate = []
+        empirical_estimates = tools.swd(emp_data, window_size)
+        for phase in phases:
+            frequency_significance_rate = []
+            #Loop over window size
+            for frequency in frequencies:
+                sinusoid1 = tools.sinusoid(300, frequency, 0, 0.72)
+                sinusoid2 = tools.sinusoid(300, frequency, phase, 0.72)
+                sinusoid = np.array([sinusoid1, sinusoid2])
+            
+                #Compute signal estimates
+                sinusoid_estimates = tools.swd(sinusoid, window_size)
+                #Compute significance of signal estimates(from empirical parameters)
+                sinusoid_significance = tools.significant_estimates(
+                    sinusoid_estimates,
+                    null=empirical_estimates,
+                    alpha=0.1
+                )
+                sinusoid_significance_rate = np.mean(
+                    sinusoid_significance
+                )
+                frequency_significance_rate.append(sinusoid_significance_rate)
+            phase_frequency_significance_rate.append(frequency_significance_rate)
+
+        sns.heatmap(phase_frequency_significance_rate , xticklabels = frequencies , yticklabels = phases / pi)
+        sns.color_palette("YlOrBr", as_cmap=True)
+        plt.show()
 
 
 simulatiom_benchmark(filepath, results_dirpath)
