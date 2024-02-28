@@ -335,8 +335,7 @@ def analyze_surrogate_statistics(
 
             estimates_significance = np.abs(tools.significant_estimates(
                 estimates_empirical,
-                mean=np.mean(estimates_empirical[insig_edge_indices]),
-                std=np.std(estimates_empirical[insig_edge_indices])))
+                null=estimates_sc))
             total_significance_count_filter = np.sum(estimates_significance)
             significance_rate_filter = total_significance_count_filter / \
                 np.size(estimates_significance)
@@ -369,8 +368,7 @@ def analyze_surrogate_statistics(
 
             null_significance = np.abs(tools.significant_estimates(
                 estimates_scc,
-                mean=np.mean(estimates_empirical[insig_edge_indices]),
-                std=np.std(estimates_empirical[insig_edge_indices])))
+                null=estimates_sc))
             null_significance_rate = tools.scaled_significance_rate(
                 null_significance
             )

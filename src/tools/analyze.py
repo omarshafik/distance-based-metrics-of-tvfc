@@ -48,7 +48,7 @@ def swd_no_parallel(
         pairs = np.array(list(combinations(range(timeseries.shape[0]), 2)))
 
     if derivative is None and use_derivative is True:
-        derivative = common.differenced(timeseries, normalize=True)
+        derivative = common.derivative(timeseries, normalize=True)
 
     # Get distances between amplitudes
     distance_ts = np.abs(timeseries[pairs[:, 0]] - timeseries[pairs[:, 1]])
@@ -121,7 +121,7 @@ def swd(
     timeseries = common.normalized(timeseries, axis=-1)
 
     if use_derivative:
-        derivative = common.differenced(timeseries, centered=True, normalize=True, axis=-1)
+        derivative = common.derivative(timeseries, normalize=True, axis=-1)
     else:
         derivative = None
 
@@ -236,7 +236,7 @@ def mtd(
         pairs = np.array(list(combinations(range(timeseries.shape[0]), 2)))
 
     timeseries = common.normalized(timeseries, axis=-1)
-    timeseries = common.differenced(timeseries, normalize=True, axis=-1)
+    timeseries = common.derivative(timeseries, normalize=True, axis=-1)
     return np.squeeze(Parallel()(
         delayed(mtd_no_parallel)(
             timeseries,

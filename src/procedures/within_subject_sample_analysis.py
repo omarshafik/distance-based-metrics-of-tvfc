@@ -63,8 +63,7 @@ def analyze_sample_statistics(
             if not is_edge_significant]
         estimates_significance = tools.significant_estimates(
             estimates_empirical,
-            mean=np.mean(estimates_empirical[insig_edge_indices]),
-            std=np.std(estimates_empirical[insig_edge_indices]))
+            null=estimates_empirical[insig_edge_indices])
         # only process selected presentation edges
         estimates_significance = estimates_significance[presentation_edges]
         significant_timepoints = tools.significant_time_points(estimates_significance, window_size)
