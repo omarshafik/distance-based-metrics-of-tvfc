@@ -22,6 +22,7 @@ from .plot import (
 from .test import (
     test_stationary,
     test_distribution,
+    significance,
     get_edges_of_interest,
     significant_estimates,
     significant_time_points,
@@ -32,5 +33,6 @@ from .test import (
 from .simulate import (
     sc,
     pr,
-    laumann
+    laumann,
+    bioplausible
 )

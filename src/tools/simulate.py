@@ -117,3 +117,24 @@ def pr_new(
     pr_data = np.fft.ifft(simulated_spectrum, axis=-1).real
     pr_data = tools.normalized(pr_data, axis=-1)
     return pr_data
+
+def bioplausible(emp_data, phase_lag = 0, noise_level = 0.5, length: int = -1):
+    """
+    Generates two simulated signals with the average empirical power spectrum
+    and a controllable phase lag for all frequencies.
+
+    Parameters:
+    emp_data (numpy.ndarray): 2D array of node time series (dimensions: nodes x time points).
+    phase_lag (float): Phase lag between the two signals in radians.
+
+    Returns:
+    numpy.ndarray: Two simulated signals with the specified properties.
+    """
+    # Compute the average power spectrum
+    power_spectrum = np.mean(np.abs(np.fft.rfft(emp_data, axis=-1)), axis=0)
+
+    # Construct the first simulated signal
+    complex_spectrum = power_spectrum * np.exp(1j * phase_lag)
+    signal = tools.normalized(np.fft.ifft(complex_spectrum, axis=-1).real[500:-500])[0:length]
+    noise = np.random.normal(scale=noise_level, size=signal.shape[-1])
+    return tools.normalized(signal + noise)

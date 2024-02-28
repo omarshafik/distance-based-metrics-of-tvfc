@@ -72,6 +72,24 @@ def get_edges_of_interest(
         empirical_measures > upper_bound, 1, 0)
     return edges_of_interest
 
+def significance(
+    estimates: np.ndarray,
+    test = stats.norm.sf,
+    mean: float = None,
+    std: float = None,
+    **kwargs) -> np.ndarray:
+    """ get estimates significance. Spans from -1 to 1.
+
+    Args:
+        estimates (np.ndarray): array of computed estimates. 
+            assumes that estimates are normally distributed
+        mean (float, optional): Estimates' mean. Defaults to the mean of given estimates array.
+        std (float, optional): Estimates' std. Defaults to the std of given estimates array.
+    Returns:
+        list: significance array with equal size to given estimates array
+    """
+    return (1 - (2 * test(estimates, loc=mean, scale=std, **kwargs)))
+
 def significant_estimates(
     estimates: np.ndarray,
     null: np.ndarray = None,
