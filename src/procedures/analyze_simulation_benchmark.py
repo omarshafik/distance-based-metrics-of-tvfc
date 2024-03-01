@@ -58,8 +58,8 @@ def simulatiom_benchmark(
 
             sns.heatmap(
                 phase_frequency_significance_rate,
-                vmin=1,
-                vmax=-1,
+                vmin=-1,
+                vmax=1,
                 xticklabels = [str(round(frequency, 2)) for frequency in frequencies],
                 yticklabels = ["pi / " + str(round(pi/phase, 2)) for phase in phases])
             sns.color_palette("YlOrBr", as_cmap=True)
