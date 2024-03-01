@@ -60,9 +60,12 @@ os.mkdir(results_dir)
 
 print_info(f"INFO: Selected file {os.path.basename(file_to_process)}", results_dir)
 print_info(f"INFO: randomization seed: {args.random_seed}", results_dir)
+procedures.simulatiom_benchmark(file_to_process, results_dir)
 procedures.generate_illustrations(data_smoothed, random=random, results_dirname=results_dir)
 procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir, random=random)
 procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir, metric_name="swc", random=random)
+# window_sizes = [29, 49]
+window_sizes = None
 # surrogate analysis using PR and unsmoothed empirical data
 pr_surrogates_results_dir = os.path.join(results_dir, "pr")
 os.mkdir(pr_surrogates_results_dir)
@@ -72,6 +75,7 @@ procedures.analyze_surrogate_statistics(
     sc_data=sc_data,
     scc_data=pr_data,
     metric_name="mtd",
+    window_sizes=window_sizes,
     random=random)
 procedures.analyze_surrogate_statistics(
     data,
@@ -79,12 +83,14 @@ procedures.analyze_surrogate_statistics(
     sc_data=sc_data,
     scc_data=pr_data,
     metric_name="swc",
+    window_sizes=window_sizes,
     random=random)
 procedures.analyze_surrogate_statistics(
     data,
     pr_surrogates_results_dir,
     sc_data=sc_data,
     scc_data=pr_data,
+    window_sizes=window_sizes,
     random=random)
 # surrogate analysis using PR and smoothed empirical data
 pr_smooth_surrogates_results_dir = os.path.join(results_dir, "pr-smoothed")
@@ -95,6 +101,7 @@ procedures.analyze_surrogate_statistics(
     sc_data=sc_data_smoothed,
     scc_data=pr_data_smoothed,
     metric_name="mtd",
+    window_sizes=window_sizes,
     random=random)
 procedures.analyze_surrogate_statistics(
     data_smoothed,
@@ -102,14 +109,16 @@ procedures.analyze_surrogate_statistics(
     sc_data=sc_data_smoothed,
     scc_data=pr_data_smoothed,
     metric_name="swc",
+    window_sizes=window_sizes,
     random=random)
 procedures.analyze_surrogate_statistics(
     data_smoothed,
     pr_smooth_surrogates_results_dir,
     sc_data=sc_data_smoothed,
     scc_data=pr_data_smoothed,
+    window_sizes=window_sizes,
     random=random)
-# surrogate analysis using Laumann and unsmoothed empirical data
+surrogate analysis using Laumann and unsmoothed empirical data
 laumann_surrogates_results_dir = os.path.join(results_dir, "laumann")
 os.mkdir(laumann_surrogates_results_dir)
 procedures.analyze_surrogate_statistics(
@@ -118,6 +127,7 @@ procedures.analyze_surrogate_statistics(
     sc_data=sc_data,
     scc_data=laumann_data,
     metric_name="mtd",
+    window_sizes=window_sizes,
     random=random)
 procedures.analyze_surrogate_statistics(
     data,
@@ -125,12 +135,14 @@ procedures.analyze_surrogate_statistics(
     sc_data=sc_data,
     scc_data=laumann_data,
     metric_name="swc",
+    window_sizes=window_sizes,
     random=random)
 procedures.analyze_surrogate_statistics(
     data,
     laumann_surrogates_results_dir,
     sc_data=sc_data,
     scc_data=laumann_data,
+    window_sizes=window_sizes,
     random=random)
 # surrogate analysis using Laumann and smoothed empirical data
 laumann_smooth_surrogates_results_dir = os.path.join(results_dir, "laumann-smoothed")
@@ -141,6 +153,7 @@ procedures.analyze_surrogate_statistics(
     sc_data=sc_data_smoothed,
     scc_data=laumann_data_smoothed,
     metric_name="mtd",
+    window_sizes=window_sizes,
     random=random)
 procedures.analyze_surrogate_statistics(
     data_smoothed,
@@ -148,12 +161,14 @@ procedures.analyze_surrogate_statistics(
     sc_data=sc_data_smoothed,
     scc_data=laumann_data_smoothed,
     metric_name="swc",
+    window_sizes=window_sizes,
     random=random)
 procedures.analyze_surrogate_statistics(
     data_smoothed,
     laumann_smooth_surrogates_results_dir,
     sc_data=sc_data_smoothed,
     scc_data=laumann_data_smoothed,
+    window_sizes=window_sizes,
     random=random)
 procedures.analyze_sample_statistics(file_to_process, results_dir, random=random)
 procedures.analyze_between_subjects_ensemble_statistics(input_files, results_dir, random=random)
