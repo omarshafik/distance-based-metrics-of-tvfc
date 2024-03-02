@@ -1,10 +1,9 @@
 """
 function definitions to compute time-varying connectvity estimates from fMRI data
 """
-from itertools import combinations, product
+from itertools import combinations
 from joblib import Parallel, delayed
 import numpy as np
-from scipy import stats
 import tools.common as common
 
 def swd_no_parallel(

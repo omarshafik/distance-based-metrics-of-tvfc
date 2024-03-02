@@ -50,12 +50,14 @@ def analyze_sample_statistics(
 
         edges_of_interest = tools.get_edges_of_interest(
             timeavg_estimates_empirical,
-            timeavg_estimates_sc
+            timeavg_estimates_sc,
+            alpha=0
         )
         edges_of_interest += tools.get_edges_of_interest(
             np.var(estimates_empirical, axis=-1),
             np.var(estimates_scc, axis=-1),
-            one_side=True
+            one_side=True,
+            alpha=0.01
         )
         edges_of_interest[edges_of_interest != 0] = 1
         insig_edge_indices = [

@@ -191,7 +191,8 @@ def analyze_surrogate_statistics(
             # Test time-averaged estimates null hypothesis (H1)
             interest_edges_h1 = tools.get_edges_of_interest(
                 timeavg_estimates_empirical,
-                timeavg_estimates_sc
+                timeavg_estimates_sc,
+                alpha=0
             )
             estimates_significance_h1 = (
                 estimates_significance.T * interest_edges_h1).T
@@ -238,7 +239,8 @@ def analyze_surrogate_statistics(
             interest_edges_h2 = tools.get_edges_of_interest(
                 edge_variance_empirical,
                 edge_variance_scc,
-                one_side=True
+                one_side=True,
+                alpha=0.01
             )
             estimates_significance_h2 = (
                 estimates_significance.T * interest_edges_h2).T
