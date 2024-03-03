@@ -163,7 +163,8 @@ def generate_illustrations(
     timeavg_estimates_sc = tools.swd(sc_data, sc_data.shape[-1])
     h1_edges_of_interest = tools.get_edges_of_interest(
         timeavg_estimates_empirical,
-        timeavg_estimates_sc
+        timeavg_estimates_sc,
+        alpha=0
     )
     h1_edges = [
         i for i, is_edge_significant in enumerate(h1_edges_of_interest)
@@ -186,7 +187,8 @@ def generate_illustrations(
     h2_edges_of_interest = tools.get_edges_of_interest(
         np.var(edge_time_series, axis=-1),
         np.var(scc_edge_time_series, axis=-1),
-        one_side=True
+        one_side=True,
+        alpha=0.01
     )
     h2_edges = [
         i for i, is_edge_significant in enumerate(h2_edges_of_interest)

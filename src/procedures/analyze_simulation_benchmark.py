@@ -7,19 +7,6 @@ import tools
 from tools import print_info
 
 
-def get_sinusoid_relationship_significance(frequency, phase, null, window_size, metric):
-    sinusoid1 = tools.sinusoid(300, frequency, 0, 0.72)
-    sinusoid2 = tools.sinusoid(300, frequency, phase, 0.72)
-    sinusoid = np.array([sinusoid1, sinusoid2])
-    sinusoid_estimates = metric(sinusoid, window_size)
-    sinusoid_significance = tools.significant_estimates(
-        sinusoid_estimates,
-        null=null,
-        alpha=0.05
-    )
-    return np.mean(sinusoid_significance)
-
-
 def simulatiom_benchmark(
     filename: str,
     results_dirname: str,
@@ -44,20 +31,37 @@ def simulatiom_benchmark(
     if not os.path.exists(benchmark_dir):
         os.mkdir(benchmark_dir)
 
-    window_sizes = [9, 29, 49, 69, 89, 109]
-  
     pi = np.pi
     phases = np.arange(pi / 16, pi, pi / 16)
     frequencies = np.arange(0.01, 0.11, 0.01)
-    
+
+    window_sizes = [9, 29, 49, 69, 89, 109]
     for window_size in window_sizes:
         for metric_name, metric in metrics.items():
             sc_estimates = metric(sc_data, window_size)
-            phase_frequency_significance_rate = np.reshape(Parallel(n_jobs=2)(
-                delayed(get_sinusoid_relationship_significance)(
-                    frequency, phase, sc_estimates, window_size, metric
-                ) for phase in phases for frequency in frequencies
-            ), (len(phases), len(frequencies)))
+            sinusoid_data = None
+            sinusoid_pairs = None
+            sinusoid_idx = 0
+            for phase in phases:
+                for frequency in frequencies:
+                    sinusoid1 = tools.sinusoid(300, frequency, 0, 0.72)
+                    sinusoid2 = tools.sinusoid(300, frequency, phase, 0.72)
+                    if sinusoid_data is None:
+                        sinusoid_data = np.array([sinusoid1, sinusoid2])
+                        sinusoid_pairs = np.array([[sinusoid_idx, sinusoid_idx + 1]])
+                    else:
+                        sinusoid_data = np.append(sinusoid_data, [sinusoid1, sinusoid2], axis=0)
+                        sinusoid_pairs = np.append(sinusoid_pairs, [[sinusoid_idx, sinusoid_idx + 1]], axis=0)
+                    sinusoid_idx = sinusoid_idx + 2
+            sinusoid_estimates = metric(sinusoid_data, window_size, pairs=sinusoid_pairs)
+            sinusoid_significance = tools.significant_estimates(
+                sinusoid_estimates,
+                null=sc_estimates,
+                alpha=0.05
+            )
+            phase_frequency_significance_rate = np.reshape(
+                np.mean(sinusoid_significance, axis=-1),
+                (len(phases), len(frequencies)))
             print(f"INFO: plotting {metric_name.upper()} w={window_size} heatmap")
             sns.heatmap(
                 phase_frequency_significance_rate,
