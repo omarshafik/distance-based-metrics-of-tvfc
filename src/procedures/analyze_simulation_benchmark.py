@@ -35,7 +35,7 @@ def simulatiom_benchmark(
     phases = np.arange(pi / 16, pi, pi / 16)
     frequencies = np.arange(0.01, 0.11, 0.01)
 
-    window_sizes = [9, 29, 49, 69, 89, 109]
+    window_sizes = [9, 19, 29, 39, 49, 59, 69, 79, 89, 99, 109]
     for window_size in window_sizes:
         for metric_name, metric in metrics.items():
             sc_estimates = metric(sc_data, window_size)
@@ -62,17 +62,21 @@ def simulatiom_benchmark(
             phase_frequency_significance_rate = np.reshape(
                 np.mean(sinusoid_significance, axis=-1),
                 (len(phases), len(frequencies)))
-            print(f"INFO: plotting {metric_name.upper()} w={window_size} heatmap")
             sns.heatmap(
                 phase_frequency_significance_rate,
+                cmap='seismic',
                 vmin=-1,
                 vmax=1,
                 xticklabels = [str(round(frequency, 2)) for frequency in frequencies],
                 yticklabels = ["pi / " + str(round(pi/phase, 2)) for phase in phases])
-            sns.color_palette("YlOrBr", as_cmap=True)
             if results_dirname is None:
                 plt.show()
             else:
                 figpath = os.path.join(benchmark_dir, f"phase-frequency-{metric_name}-window-{window_size}-heatmap.png")
                 plt.savefig(figpath, dpi=1200)
                 plt.close()
+            
+            # calculate uncertainty = -1 * sum(plog(p))
+            non_zero_probabilities = phase_frequency_significance_rate[phase_frequency_significance_rate > 0]
+            uncertainty = -1 * np.sum(non_zero_probabilities * np.log(non_zero_probabilities))
+            print_info(f"INFO: {metric_name.upper()} uncertainty w={window_size}: {uncertainty}", benchmark_dir)

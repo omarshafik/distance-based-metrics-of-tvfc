@@ -188,7 +188,7 @@ def generate_illustrations(
         np.var(edge_time_series, axis=-1),
         np.var(scc_edge_time_series, axis=-1),
         one_side=True,
-        alpha=0.01
+        alpha=0.05
     )
     h2_edges = [
         i for i, is_edge_significant in enumerate(h2_edges_of_interest)
@@ -327,7 +327,8 @@ def generate_illustrations(
         h2_edges_of_interest = tools.get_edges_of_interest(
             np.var(empirical_swd, axis=-1),
             np.var(scc_edge_time_series, axis=-1),
-            one_side=True
+            one_side=True,
+            alpha=0.05
         )
         h1h2_edges_of_interest = h1_edges_of_interest + h2_edges_of_interest
         h1h2_edges_of_interest[h1h2_edges_of_interest != 0] = 1

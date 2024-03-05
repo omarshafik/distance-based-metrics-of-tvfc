@@ -202,8 +202,9 @@ def analyze_surrogate_statistics(
             h1_type1_error_rate = \
                 (total_significance_count_nofilter - significance_count_h1) / \
                 total_significance_count_nofilter
-            h1_significance_to_chance_ratio = (1 - h1_type1_error_rate) / (
-                np.sum(interest_edges_h1) / estimates_empirical.shape[0]
+            h1_p = 1 - h1_type1_error_rate
+            h1_null_deviation = h1_p * np.log(
+                h1_p / (np.sum(interest_edges_h1) / estimates_empirical.shape[0])
             )
             print_info(
                 f"INFO: significant edge count of H1: {np.sum(interest_edges_h1)}", results_dirname)
@@ -213,7 +214,7 @@ def analyze_surrogate_statistics(
             print_info(
                 f"INFO: H1 type 1 error rate: {h1_type1_error_rate}", results_dirname)
             print_info(
-                f"INFO: H1 significance to chance ratio: {h1_significance_to_chance_ratio}", results_dirname)
+                f"INFO: H1 Deviation from null (chance): {h1_null_deviation}", results_dirname)
 
             insig_edge_indices = [
                 i for i, is_edge_significant in enumerate(interest_edges_h1)
@@ -240,7 +241,7 @@ def analyze_surrogate_statistics(
                 edge_variance_empirical,
                 edge_variance_scc,
                 one_side=True,
-                alpha=0.01
+                alpha=0.05
             )
             estimates_significance_h2 = (
                 estimates_significance.T * interest_edges_h2).T
@@ -250,8 +251,9 @@ def analyze_surrogate_statistics(
             h2_type1_error_rate = \
                 (total_significance_count_nofilter - significance_count_h2) / \
                 total_significance_count_nofilter
-            h2_significance_to_chance_ratio = (1 - h2_type1_error_rate) / (
-                np.sum(interest_edges_h2) / estimates_empirical.shape[0]
+            h2_p = 1 - h2_type1_error_rate
+            h2_null_deviation = h2_p * np.log(
+                h2_p / (np.sum(interest_edges_h2) / estimates_empirical.shape[0])
             )
             print_info(f"INFO: significant edge count of H2 (w={window_size}): " +
                        f"{np.sum(interest_edges_h2)}", results_dirname)
@@ -260,7 +262,7 @@ def analyze_surrogate_statistics(
             print_info(
                 f"INFO: H2 type 1 error rate (w={window_size}): {h2_type1_error_rate}", results_dirname)
             print_info(
-                f"INFO: H2 significance to chance ratio: {h2_significance_to_chance_ratio}", results_dirname)
+                f"INFO: H2 Deviation from null (chance): {h2_null_deviation}", results_dirname)
 
             insig_edge_indices = [
                 i for i, is_edge_significant in enumerate(interest_edges_h2)
@@ -294,8 +296,9 @@ def analyze_surrogate_statistics(
             all_type1_error_rate = \
                 (total_significance_count_nofilter - significance_count_h1h2) / \
                 total_significance_count_nofilter
-            h1h2_significance_to_chance_ratio = (1 - all_type1_error_rate) / (
-                np.sum(interest_edges_h1) / estimates_empirical.shape[0]
+            h1h2_p = 1 - all_type1_error_rate
+            h1h2_null_deviation = h1h2_p * np.log(
+                h1h2_p / (np.sum(interest_edges_h1h2) / estimates_empirical.shape[0])
             )
             print_info(f"INFO: significant edge count of H1 & H2 (w={window_size}):" +
                        f" {np.sum(interest_edges_h1h2)}", results_dirname)
@@ -304,7 +307,7 @@ def analyze_surrogate_statistics(
             print_info(
                 f"INFO: H1 & H2 type 1 error rate (w={window_size}): {all_type1_error_rate}", results_dirname)
             print_info(
-                f"INFO: H1 & H2 significance to chance ratio: {h1h2_significance_to_chance_ratio}", results_dirname)
+                f"INFO: H1 & H2 Deviation from null (chance): {h1h2_null_deviation}", results_dirname)
 
             insig_edge_indices = [
                 i for i, is_edge_significant in enumerate(interest_edges_h1h2)
@@ -350,13 +353,14 @@ def analyze_surrogate_statistics(
             change_in_significance_rate = (
                 significance_rate_filter - (false_positive_count / np.size(false_significance))
             ) / (false_positive_count / np.size(false_significance))
-            significance_to_chance_ratio = (1 - type_1_error_rate) / (
-                np.sum(interest_edges_h1h2) / estimates_empirical.shape[0]
+            p = 1 - type_1_error_rate
+            null_deviation = p * np.log(
+                p / (np.sum(interest_edges_h1h2) / estimates_empirical.shape[0])
             )
             print_info(
                 f"INFO: Filtered type 1 error rate (w={window_size}): {type_1_error_rate}", results_dirname)
             print_info(
-                f"INFO: Significance to chance ratio (w={window_size}): {significance_to_chance_ratio}", results_dirname)
+                f"INFO: H1 & H2 Deviation from null with new confidence levels: {null_deviation}", results_dirname)
             print_info(
                 f"INFO: Change in significance rate: {change_in_significance_rate}", results_dirname)
 
@@ -369,14 +373,14 @@ def analyze_surrogate_statistics(
             edge_h1h2_significance_rate = empirical_significance_rate[sig_edge_indices_h1h2]
 
             null_significance = np.abs(tools.significant_estimates(
-                estimates_scc,
+                estimates_sc,
                 null=estimates_sc))
             null_significance_rate = tools.scaled_significance_rate(
                 null_significance
             )
             tools.plot_overlapping_distributions(
                 [empirical_significance_rate, null_significance_rate],
-                ["Empirical", "SCC"],
+                ["Empirical", "SC"],
                 xlabel="Significance Rate per Edge",
                 ylabel="Density",
                 title=f"w = {window_size}",

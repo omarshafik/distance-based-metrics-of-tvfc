@@ -57,7 +57,7 @@ def analyze_sample_statistics(
             np.var(estimates_empirical, axis=-1),
             np.var(estimates_scc, axis=-1),
             one_side=True,
-            alpha=0.01
+            alpha=0.05
         )
         edges_of_interest[edges_of_interest != 0] = 1
         insig_edge_indices = [

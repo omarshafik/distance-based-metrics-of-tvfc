@@ -60,7 +60,7 @@ os.mkdir(results_dir)
 
 print_info(f"INFO: Selected file {os.path.basename(file_to_process)}", results_dir)
 print_info(f"INFO: randomization seed: {args.random_seed}", results_dir)
-procedures.simulatiom_benchmark(file_to_process, results_dir)
+procedures.simulatiom_benchmark(file_to_process, results_dir, random=random)
 procedures.generate_illustrations(data_smoothed, random=random, results_dirname=results_dir)
 procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir, random=random)
 procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir, metric_name="swc", random=random)
@@ -118,7 +118,7 @@ procedures.analyze_surrogate_statistics(
     scc_data=pr_data_smoothed,
     window_sizes=window_sizes,
     random=random)
-surrogate analysis using Laumann and unsmoothed empirical data
+# surrogate analysis using Laumann and unsmoothed empirical data
 laumann_surrogates_results_dir = os.path.join(results_dir, "laumann")
 os.mkdir(laumann_surrogates_results_dir)
 procedures.analyze_surrogate_statistics(
