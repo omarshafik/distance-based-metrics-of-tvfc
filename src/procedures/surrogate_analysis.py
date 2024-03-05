@@ -204,7 +204,7 @@ def analyze_surrogate_statistics(
                 total_significance_count_nofilter
             q = 1 - h1_type1_error_rate
             p = np.sum(interest_edges_h1) / estimates_empirical.shape[0]
-            h1_null_deviation = p * np.log(p / q)
+            h1_null_deviation = np.abs(p * np.log(p / q))
             print_info(
                 f"INFO: significant edge count of H1: {np.sum(interest_edges_h1)}", results_dirname)
             print_info("INFO: significant tvFC estimates count of H1 " +
@@ -213,7 +213,7 @@ def analyze_surrogate_statistics(
             print_info(
                 f"INFO: H1 type 1 error rate: {h1_type1_error_rate}", results_dirname)
             print_info(
-                f"INFO: H1 Deviation from null (chance): {h1_null_deviation}", results_dirname)
+                f"INFO: H1 Divergence from null (chance): {h1_null_deviation}", results_dirname)
 
             insig_edge_indices = [
                 i for i, is_edge_significant in enumerate(interest_edges_h1)
@@ -252,7 +252,7 @@ def analyze_surrogate_statistics(
                 total_significance_count_nofilter
             q = 1 - h2_type1_error_rate
             p = np.sum(interest_edges_h2) / estimates_empirical.shape[0]
-            h2_null_deviation = p * np.log(p / q)
+            h2_null_deviation = np.abs(p * np.log(p / q))
             print_info(f"INFO: significant edge count of H2 (w={window_size}): " +
                        f"{np.sum(interest_edges_h2)}", results_dirname)
             print_info("INFO: significant tvFC estimates count of H2 (edge variance null): " +
@@ -260,7 +260,7 @@ def analyze_surrogate_statistics(
             print_info(
                 f"INFO: H2 type 1 error rate (w={window_size}): {h2_type1_error_rate}", results_dirname)
             print_info(
-                f"INFO: H2 Deviation from null (chance): {h2_null_deviation}", results_dirname)
+                f"INFO: H2 Divergence from null (chance): {h2_null_deviation}", results_dirname)
 
             insig_edge_indices = [
                 i for i, is_edge_significant in enumerate(interest_edges_h2)
@@ -296,7 +296,7 @@ def analyze_surrogate_statistics(
                 total_significance_count_nofilter
             q = 1 - all_type1_error_rate
             p = np.sum(interest_edges_h1h2) / estimates_empirical.shape[0]
-            h1h2_null_deviation = p * np.log(p / q)
+            h1h2_null_deviation = np.abs(p * np.log(p / q))
             print_info(f"INFO: significant edge count of H1 & H2 (w={window_size}):" +
                        f" {np.sum(interest_edges_h1h2)}", results_dirname)
             print_info("INFO: significant tvFC estimates count of H1 & H2: " +
@@ -304,7 +304,7 @@ def analyze_surrogate_statistics(
             print_info(
                 f"INFO: H1 & H2 type 1 error rate (w={window_size}): {all_type1_error_rate}", results_dirname)
             print_info(
-                f"INFO: H1 & H2 Deviation from null (chance): {h1h2_null_deviation}", results_dirname)
+                f"INFO: H1 & H2 Divergence from null (chance): {h1h2_null_deviation}", results_dirname)
 
             insig_edge_indices = [
                 i for i, is_edge_significant in enumerate(interest_edges_h1h2)
@@ -352,11 +352,11 @@ def analyze_surrogate_statistics(
             ) / (false_positive_count / np.size(false_significance))
             q = 1 - type_1_error_rate
             p = np.sum(interest_edges_h1h2) / estimates_empirical.shape[0]
-            null_deviation = p * np.log(p / q)
+            null_deviation = np.abs(p * np.log(p / q))
             print_info(
                 f"INFO: Filtered type 1 error rate (w={window_size}): {type_1_error_rate}", results_dirname)
             print_info(
-                f"INFO: H1 & H2 Deviation from null with new confidence levels: {null_deviation}", results_dirname)
+                f"INFO: H1 & H2 Divergence from null with new confidence levels: {null_deviation}", results_dirname)
             print_info(
                 f"INFO: Change in significance rate: {change_in_significance_rate}", results_dirname)
 
