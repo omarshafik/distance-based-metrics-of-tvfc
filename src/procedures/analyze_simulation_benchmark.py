@@ -59,11 +59,11 @@ def simulatiom_benchmark(
                 null=sc_estimates,
                 alpha=0.05
             )
-            phase_frequency_significance_rate = np.reshape(
+            phase_frequency_average_probability = np.reshape(
                 np.mean(sinusoid_significance, axis=-1),
                 (len(phases), len(frequencies)))
             sns.heatmap(
-                phase_frequency_significance_rate,
+                phase_frequency_average_probability,
                 cmap='seismic',
                 vmin=-1,
                 vmax=1,
@@ -77,6 +77,6 @@ def simulatiom_benchmark(
                 plt.close()
             
             # calculate uncertainty = -1 * sum(plog(p))
-            non_zero_probabilities = phase_frequency_significance_rate[phase_frequency_significance_rate > 0]
-            uncertainty = -1 * np.sum(non_zero_probabilities * np.log(non_zero_probabilities))
+            non_zero_probabilities = np.abs(phase_frequency_average_probability[phase_frequency_average_probability != 0])
+            uncertainty = np.abs(np.sum(non_zero_probabilities * np.log(non_zero_probabilities)))
             print_info(f"INFO: {metric_name.upper()} uncertainty w={window_size}: {uncertainty}", benchmark_dir)

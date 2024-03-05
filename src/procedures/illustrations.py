@@ -316,7 +316,8 @@ def generate_illustrations(
     timeavg_estimates_sc = tools.swd(sc_data, sc_data.shape[-1])
     h1_edges_of_interest = tools.get_edges_of_interest(
         timeavg_estimates_empirical,
-        timeavg_estimates_sc
+        timeavg_estimates_sc,
+        alpha=0
     )
 
     scc_data = tools.laumann(data, random)
