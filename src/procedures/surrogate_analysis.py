@@ -202,10 +202,9 @@ def analyze_surrogate_statistics(
             h1_type1_error_rate = \
                 (total_significance_count_nofilter - significance_count_h1) / \
                 total_significance_count_nofilter
-            h1_p = 1 - h1_type1_error_rate
-            h1_null_deviation = h1_p * np.log(
-                h1_p / (np.sum(interest_edges_h1) / estimates_empirical.shape[0])
-            )
+            q = 1 - h1_type1_error_rate
+            p = np.sum(interest_edges_h1) / estimates_empirical.shape[0]
+            h1_null_deviation = p * np.log(p / q)
             print_info(
                 f"INFO: significant edge count of H1: {np.sum(interest_edges_h1)}", results_dirname)
             print_info("INFO: significant tvFC estimates count of H1 " +
@@ -251,10 +250,9 @@ def analyze_surrogate_statistics(
             h2_type1_error_rate = \
                 (total_significance_count_nofilter - significance_count_h2) / \
                 total_significance_count_nofilter
-            h2_p = 1 - h2_type1_error_rate
-            h2_null_deviation = h2_p * np.log(
-                h2_p / (np.sum(interest_edges_h2) / estimates_empirical.shape[0])
-            )
+            q = 1 - h2_type1_error_rate
+            p = np.sum(interest_edges_h2) / estimates_empirical.shape[0]
+            h2_null_deviation = p * np.log(p / q)
             print_info(f"INFO: significant edge count of H2 (w={window_size}): " +
                        f"{np.sum(interest_edges_h2)}", results_dirname)
             print_info("INFO: significant tvFC estimates count of H2 (edge variance null): " +
@@ -296,10 +294,9 @@ def analyze_surrogate_statistics(
             all_type1_error_rate = \
                 (total_significance_count_nofilter - significance_count_h1h2) / \
                 total_significance_count_nofilter
-            h1h2_p = 1 - all_type1_error_rate
-            h1h2_null_deviation = h1h2_p * np.log(
-                h1h2_p / (np.sum(interest_edges_h1h2) / estimates_empirical.shape[0])
-            )
+            q = 1 - all_type1_error_rate
+            p = np.sum(interest_edges_h1h2) / estimates_empirical.shape[0]
+            h1h2_null_deviation = p * np.log(p / q)
             print_info(f"INFO: significant edge count of H1 & H2 (w={window_size}):" +
                        f" {np.sum(interest_edges_h1h2)}", results_dirname)
             print_info("INFO: significant tvFC estimates count of H1 & H2: " +
@@ -353,10 +350,9 @@ def analyze_surrogate_statistics(
             change_in_significance_rate = (
                 significance_rate_filter - (false_positive_count / np.size(false_significance))
             ) / (false_positive_count / np.size(false_significance))
-            p = 1 - type_1_error_rate
-            null_deviation = p * np.log(
-                p / (np.sum(interest_edges_h1h2) / estimates_empirical.shape[0])
-            )
+            q = 1 - type_1_error_rate
+            p = np.sum(interest_edges_h1h2) / estimates_empirical.shape[0]
+            null_deviation = p * np.log(p / q)
             print_info(
                 f"INFO: Filtered type 1 error rate (w={window_size}): {type_1_error_rate}", results_dirname)
             print_info(
