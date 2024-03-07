@@ -2,12 +2,10 @@
     Mostly implemented by ChatGPT 4
 """
 import os
-from itertools import combinations
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import pandas as pd
-from tools.common import sliding_average
 import tools
 plt.style.use('seaborn-v0_8-whitegrid')
 

@@ -18,6 +18,7 @@ from .plot import (
     plot_autocorrelation,
     plot_qq,
     plot_grid,
+    scatter_fc_edges,
     plot_correlation_matrices)
 from .test import (
     test_stationary,

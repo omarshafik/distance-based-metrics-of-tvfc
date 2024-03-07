@@ -1,14 +1,17 @@
 """
 visualization helper functions
 """
+import warnings
 from statsmodels.tsa.stattools import acf
 import matplotlib.pyplot as plt
+import seaborn as sns
 from scipy import stats
 import numpy as np
 from tools.common import find_segments
 
 PLOT = True
 plt.style.use('seaborn-v0_8-whitegrid')
+warnings.filterwarnings("ignore", "is_categorical_dtype")
 
 def plot_timeseries_and_estimates(
     timseries_array: np.ndarray,
@@ -313,6 +316,26 @@ def plot_correlation_matrices(
         axi.set_title(labels[i], pad=20, fontsize=12)
         # Improve tick visibility and aesthetics
         axi.tick_params(axis='both', which='both', length=0)
+
+    # Save the plot to an image file or display it
+    if out is None:
+        plt.show()
+    else:
+        plt.savefig(out, bbox_inches='tight')
+        plt.close()
+
+def scatter_fc_edges(avg_fc,
+    edge_variance: np.ndarray,
+    edge_sr: np.ndarray,
+    out: str = None
+):
+    """ plot a scatter diagram of average FC (x-axis), edge variance (y-axis), \
+        and edge significance rate (hue)
+    """
+    # Create a scatter plot
+    plt.figure(figsize=(10, 6))
+    scatter = sns.scatterplot(x=avg_fc, y=edge_variance, hue=edge_sr, palette='viridis')
+    scatter.set(xlabel='Average FC', ylabel='Edge Variance', title='Scatter plot of FC, Edge Variance, and Significance Rate')
 
     # Save the plot to an image file or display it
     if out is None:
