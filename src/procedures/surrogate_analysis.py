@@ -488,6 +488,6 @@ def evaluate_tvfc_metrics(
             )
 
     pd.DataFrame(results).to_csv(
-        os.path.join(evaluation_dir, "discriminability.csv"),
+        os.path.join(evaluation_dir, "baysian-stats.csv"),
         index=False
     )

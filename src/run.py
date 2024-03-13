@@ -64,9 +64,11 @@ procedures.simulatiom_benchmark(file_to_process, results_dir, random=random)
 procedures.generate_illustrations(data_smoothed, random=random, results_dirname=results_dir)
 procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir, random=random)
 procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir, metric_name="swc", random=random)
-# window_sizes = [29, 49]
 window_sizes = None
+# window_sizes = [29, 49]
 # surrogate analysis using PR and unsmoothed empirical data
+print_info("#########################################################", results_dir)
+print_info("# surrogate analysis using PR and unsmoothed empirical data", results_dir)
 pr_surrogates_results_dir = os.path.join(results_dir, "pr")
 os.mkdir(pr_surrogates_results_dir)
 procedures.analyze_surrogate_statistics(
@@ -93,6 +95,8 @@ procedures.analyze_surrogate_statistics(
     window_sizes=window_sizes,
     random=random)
 # surrogate analysis using PR and smoothed empirical data
+print_info("#########################################################", results_dir)
+print_info("# surrogate analysis using PR and smoothed empirical data", results_dir)
 pr_smooth_surrogates_results_dir = os.path.join(results_dir, "pr-smoothed")
 os.mkdir(pr_smooth_surrogates_results_dir)
 procedures.analyze_surrogate_statistics(
@@ -119,6 +123,8 @@ procedures.analyze_surrogate_statistics(
     window_sizes=window_sizes,
     random=random)
 # surrogate analysis using Laumann and unsmoothed empirical data
+print_info("#########################################################", results_dir)
+print_info("# surrogate analysis using Laumann and unsmoothed empirical data", results_dir)
 laumann_surrogates_results_dir = os.path.join(results_dir, "laumann")
 os.mkdir(laumann_surrogates_results_dir)
 procedures.analyze_surrogate_statistics(
@@ -145,6 +151,8 @@ procedures.analyze_surrogate_statistics(
     window_sizes=window_sizes,
     random=random)
 # surrogate analysis using Laumann and smoothed empirical data
+print_info("#########################################################", results_dir)
+print_info("# surrogate analysis using Laumann and smoothed empirical data", results_dir)
 laumann_smooth_surrogates_results_dir = os.path.join(results_dir, "laumann-smoothed")
 os.mkdir(laumann_smooth_surrogates_results_dir)
 procedures.analyze_surrogate_statistics(
@@ -173,4 +181,4 @@ procedures.analyze_surrogate_statistics(
 procedures.analyze_sample_statistics(file_to_process, results_dir, random=random)
 procedures.analyze_between_subjects_ensemble_statistics(input_files, results_dir, random=random)
 procedures.analyze_metrics_correlation(input_files, results_dir, random=random)
-# procedures.evaluate_tvfc_metrics(input_files, results_dir, random=random)
+procedures.evaluate_tvfc_metrics(input_files, results_dir, random=random)
