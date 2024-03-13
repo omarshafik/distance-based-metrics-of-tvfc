@@ -3,6 +3,7 @@ common utility functions
 """
 import os
 import numpy as np
+from nilearn import signal
 
 PRINT = 1
 
@@ -135,7 +136,7 @@ def find_segments(arr: np.ndarray) -> list:
 
     return segments
 
-def prep_emp_data(emp_data, num_sessions = 4, smooth = 10):
+def prep_emp_data(emp_data, num_sessions = 4, smooth = 10, clean = False):
     """ prepare empirical data for tvFC processing
 
     Args:
@@ -152,7 +153,16 @@ def prep_emp_data(emp_data, num_sessions = 4, smooth = 10):
         session_end = session_start + session_length
         emp_session_data = emp_data[:, session_start:session_end]
         emp_session_data = normalized(emp_session_data, axis=-1)
-        if smooth:
+        if clean:
+            emp_session_data = signal.clean(
+                emp_session_data,
+                standardize='zscore_sample',
+                detrend=False,
+                high_pass=0.01,
+                ensure_finite=True,
+                low_pass=0.1,
+                t_r=0.72)[:, 100:-100]
+        elif smooth:
             emp_session_data = sliding_average(emp_session_data, kaiser_beta=5, window_size=smooth, pad=False)
             emp_session_data = normalized(emp_session_data, axis=-1)
         if session_idx > 0:

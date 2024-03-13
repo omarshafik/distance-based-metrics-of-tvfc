@@ -250,3 +250,31 @@ def edr(
         significance_rate_of_interest.shape[0] + false_significance_rate.shape[0]
     )
     return statistic
+
+def likelihood(significance_arr: np.ndarray, edges_of_interest: np.ndarray):
+    """ calculate the likelihood distributions given obtained significance array \
+        and hypothetically-relevant edges
+    """
+    significance_belong_to_h = (significance_arr.T * edges_of_interest).T
+    p_h_sig = np.where(
+        np.sum(np.abs(significance_arr), axis=0) > 0,
+        np.sum(np.abs(significance_belong_to_h), axis=0) / np.sum(np.abs(significance_arr), axis=0),
+        0)
+    return p_h_sig
+
+def posterior(significance_arr: np.ndarray, edges_of_interest: np.ndarray):
+    """ calculate the posterior distributions given obtained significance array \
+        and hypothetically-relevant edges
+    """
+    # P(sig|H) = P(H|sig) * P(sig) / P(H)
+    p_sig = np.sum(np.abs(significance_arr), axis=0) / significance_arr.shape[0]
+    p_h = np.sum(np.abs(edges_of_interest)) / significance_arr.shape[0]
+    p_h_sig = likelihood(significance_arr, edges_of_interest)
+    return p_h_sig * p_sig / p_h
+
+def kl_divergence(posterior_arr:np.ndarray, prior:any):
+    """get the KL Divergence from the given prior knowledge/expectation \
+    and posterior/computed outcomes
+    """
+    p_filtered = posterior_arr[posterior_arr > 0]
+    return np.sum(p_filtered*np.log(p_filtered/prior))

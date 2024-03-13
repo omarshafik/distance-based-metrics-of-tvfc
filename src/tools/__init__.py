@@ -27,12 +27,16 @@ from .test import (
     get_edges_of_interest,
     significant_estimates,
     significant_time_points,
+    likelihood,
+    posterior,
+    kl_divergence,
     scaled_significance_rate,
     sdv,
     sdr,
     edr)
 from .simulate import (
     sc,
+    sc_resample,
     pr,
     laumann,
     bioplausible,

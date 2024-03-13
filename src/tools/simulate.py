@@ -45,6 +45,51 @@ def sc(
             sc_data = session_sc_data
     return sc_data
 
+def sc_resample(
+    empirical_data,
+    sessions: int = 4,
+    random: np.random.Generator = None):
+    """
+    Generate spectrally-constrained surrogate data from empirical data.
+
+    Args:
+        empirical_data (np.ndarray): The empirical time series data for \
+                which the surrogate is to be generated.
+            The data should be structured as a numpy array, \
+                potentially multi-dimensional, where the last axis \
+            is considered the time or sequence axis.
+        random (np.random.Generator, optional): An instance of numpy's random number generator class.
+
+    Returns:
+        np.ndarray: The generated spectrally-constrained surrogate data.
+
+    """
+    if random is None:
+        random = np.random
+    sc_data = None
+    session_length = empirical_data.shape[-1] // sessions
+    for session_idx in range(sessions):
+        start = session_idx * session_length
+        end = start + session_length
+        session_data = empirical_data[:, start:end]
+        session_fft = np.fft.fft(session_data, axis=-1)
+        session_fft_amplitude = np.abs(session_fft)
+        auto_spectra = np.cov(session_fft_amplitude.T)
+        average_spectra = np.mean(session_fft_amplitude, axis=0)
+        resampled_fft_amplitude = np.abs(
+            np.random.multivariate_normal(average_spectra, auto_spectra, empirical_data.shape[0]))
+        noise = random.randn(*session_data.shape)
+        random_phases = np.angle(np.fft.fft(noise))
+        simulated_spectrum = resampled_fft_amplitude \
+            * np.exp(1j * random_phases)
+        session_sc_data = np.fft.ifft(simulated_spectrum, axis=-1).real
+        session_sc_data = tools.normalized(session_sc_data, axis=-1)
+        if sc_data is not None:
+            sc_data = np.append(sc_data, session_sc_data, -1)
+        else:
+            sc_data = session_sc_data
+    return sc_data
+
 def pr(
     empirical_data,
     average_spectrum=False,
