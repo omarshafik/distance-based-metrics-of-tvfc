@@ -9,7 +9,7 @@ from tools import print_info
 
 
 def analyze_surrogate_statistics(
-        data: str | np.ndarray,
+        data: any,
         results_dirname: str,
         metric_name: str = "swd",
         metric: callable = None,
