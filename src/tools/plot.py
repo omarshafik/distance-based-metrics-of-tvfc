@@ -75,6 +75,38 @@ def plot_timeseries_and_estimates(
         plt.savefig(out)
         plt.close()
 
+def plot_timeseries(
+    timseries_array: np.ndarray,
+    timeseries_labels: list,
+    out: str = None):
+    """ plot given pair of fMRI timeseries
+
+    Args:
+        timseries_array (np.ndarray): array of timeseries pair
+        timeseries_labels (list): a label for each timeseries
+        out (str, optional): output file path to save the plot to. Defaults to None.
+    """
+    if not PLOT:
+        return
+    plt.figure(figsize=(12, 6))
+
+    plt.subplot()
+    for ts_idx, timeseries in enumerate(timseries_array):
+        plt.plot(timeseries, label=timeseries_labels[ts_idx])
+
+    plt.xlabel('Time (TR)')
+    plt.ylabel('Amplitude')
+    plt.title('Parcel Time Series')
+    plt.legend()
+
+    plt.tight_layout()
+
+    if out is None:
+        plt.show()
+    else:
+        plt.savefig(out)
+        plt.close()
+
 def plot_distribution(
     timeseries: np.ndarray,
     xlabel: str = "",

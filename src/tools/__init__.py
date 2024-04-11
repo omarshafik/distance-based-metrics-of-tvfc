@@ -19,6 +19,7 @@ from .plot import (
     plot_qq,
     plot_grid,
     scatter_fc_edges,
+    plot_timeseries,
     plot_correlation_matrices)
 from .test import (
     test_stationary,
@@ -39,6 +40,6 @@ from .simulate import (
     sc_resample,
     pr,
     laumann,
-    bioplausible,
+    bioplausible_pair,
     sinusoid
 )

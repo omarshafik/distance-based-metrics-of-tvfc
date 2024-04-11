@@ -29,15 +29,15 @@ def sc(
         start = session_idx * session_length
         end = start + session_length
         session_data = empirical_data[:, start:end]
-        session_fft = np.fft.fft(session_data, axis=-1)
+        session_fft = np.fft.rfft(session_data, axis=-1)
         session_fft_amplitude = np.abs(session_fft)
         if average_spectrum:
             session_fft_amplitude = np.mean(session_fft_amplitude, axis=0)
         noise = random.randn(*session_data.shape)
-        random_phases = np.angle(np.fft.fft(noise))
+        random_phases = np.angle(np.fft.rfft(noise))
         simulated_spectrum = session_fft_amplitude \
             * np.exp(1j * random_phases)
-        session_sc_data = np.fft.ifft(simulated_spectrum, axis=-1).real
+        session_sc_data = np.fft.irfft(simulated_spectrum, axis=-1)
         session_sc_data = tools.normalized(session_sc_data, axis=-1)
         if sc_data is not None:
             sc_data = np.append(sc_data, session_sc_data, -1)
@@ -72,17 +72,17 @@ def sc_resample(
         start = session_idx * session_length
         end = start + session_length
         session_data = empirical_data[:, start:end]
-        session_fft = np.fft.fft(session_data, axis=-1)
+        session_fft = np.fft.rfft(session_data, axis=-1)
         session_fft_amplitude = np.abs(session_fft)
         auto_spectra = np.cov(session_fft_amplitude.T)
         average_spectra = np.mean(session_fft_amplitude, axis=0)
         resampled_fft_amplitude = np.abs(
             np.random.multivariate_normal(average_spectra, auto_spectra, empirical_data.shape[0]))
         noise = random.randn(*session_data.shape)
-        random_phases = np.angle(np.fft.fft(noise))
+        random_phases = np.angle(np.fft.rfft(noise))
         simulated_spectrum = resampled_fft_amplitude \
             * np.exp(1j * random_phases)
-        session_sc_data = np.fft.ifft(simulated_spectrum, axis=-1).real
+        session_sc_data = np.fft.irfft(simulated_spectrum, axis=-1)
         session_sc_data = tools.normalized(session_sc_data, axis=-1)
         if sc_data is not None:
             sc_data = np.append(sc_data, session_sc_data, -1)
@@ -114,16 +114,16 @@ def pr(
         start = session_idx * session_length
         end = start + session_length
         session_data = empirical_data[:, start:end]
-        session_fft = np.fft.fft(session_data, axis=-1)
+        session_fft = np.fft.rfft(session_data, axis=-1)
         session_fft_amplitude = np.abs(session_fft)
         if average_spectrum:
             session_fft_amplitude = np.mean(session_fft_amplitude, axis=0)
         noise = random.randn(session_data.shape[-1])
-        random_phases = np.angle(np.fft.fft(noise))
-        session_fft_phases = np.angle(session_fft)
+        random_phases = np.angle(np.fft.rfft(noise))
+        session_fft_phases = np.angle(np.fft.rfft(session_data, axis=-1))
         simulated_spectrum = session_fft_amplitude \
             * np.exp(1j * (session_fft_phases + random_phases))
-        session_pr_data = np.fft.ifft(simulated_spectrum, axis=-1).real
+        session_pr_data = np.fft.irfft(simulated_spectrum, axis=-1)
         session_pr_data = tools.normalized(session_pr_data, axis=-1)
         if pr_data is not None:
             pr_data = np.append(pr_data, session_pr_data, -1)
@@ -164,7 +164,7 @@ def laumann(
             laumann_data = session_laumann_data
     return laumann_data
 
-def bioplausible(emp_data, phase_lag = 0, noise_level = 0.5, length: int = -1):
+def bioplausible_pair(emp_data, phase_lag = 0, noise_level = 0.5, length: int = -1, random: np.random.Generator = None):
     """
     Generates two simulated signals with the average empirical power spectrum
     and a controllable phase lag for all frequencies.
@@ -176,14 +176,22 @@ def bioplausible(emp_data, phase_lag = 0, noise_level = 0.5, length: int = -1):
     Returns:
     numpy.ndarray: Two simulated signals with the specified properties.
     """
+    if random is None:
+        random = np.random
     # Compute the average power spectrum
     power_spectrum = np.mean(np.abs(np.fft.rfft(emp_data, axis=-1)), axis=0)
-
+    # create a time series of phases
+    noise = random.randn(emp_data.shape[-1])
+    phases = np.angle(np.fft.rfft(noise))
     # Construct the first simulated signal
-    complex_spectrum = power_spectrum * np.exp(1j * phase_lag)
-    signal = tools.normalized(np.fft.ifft(complex_spectrum, axis=-1).real[500:-500])[0:length]
-    noise = np.random.normal(scale=noise_level, size=signal.shape[-1])
-    return tools.normalized(signal + noise)
+    complex_spectrum = power_spectrum * np.exp(1j * (phases))
+    signal1 = tools.normalized(np.fft.irfft(complex_spectrum, axis=-1)[500:-500])[0:length]
+    complex_spectrum = power_spectrum * np.exp(1j * (phases + phase_lag))
+    signal2 = tools.normalized(np.fft.irfft(complex_spectrum, axis=-1)[500:-500])[0:length]
+    if noise_level > 0:
+        signal1 = signal1 + np.random.normal(scale=noise_level, size=signal1.shape[-1])
+        signal2 = signal2 + np.random.normal(scale=noise_level, size=signal2.shape[-1])
+    return tools.normalized(signal1), tools.normalized(signal2)
 
 def sinusoid(length=900, freq=0.01, phase_shift=0, repition_rate=1.2):
     """

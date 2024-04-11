@@ -77,6 +77,7 @@ def analyze_surrogate_statistics(
     if scc_data is None:
         scc_data = tools.pr(emp_data, random=random)
 
+    avg_sc_data = tools.sc(emp_data, average_spectrum=True, random=random)
 
     surrogate_dir = os.path.join(results_dirname, f"{metric_name}-surrogate-analysis")
     if plot:
@@ -211,7 +212,7 @@ def analyze_surrogate_statistics(
                 np.size(estimates_significance)
             h1_likelihood = tools.likelihood(estimates_significance, interest_edges_h1)
             h1_posterior = tools.posterior(estimates_significance, interest_edges_h1)
-            h1_divergence = tools.kl_divergence(h1_posterior, significance_rate_h1)
+            h1_divergence = tools.kl_divergence(h1_posterior, significance_rate_nofilter)
             print_info(
                 f"INFO: significant edge count of H1: {np.sum(interest_edges_h1)}", results_dirname)
             print_info("INFO: significant tvFC estimates count of H1 " +
@@ -224,8 +225,8 @@ def analyze_surrogate_statistics(
                 results_dirname)
             print_info(
                 f"INFO: H1 Divergence from null (chance): {h1_divergence}", results_dirname)
-            results["likelihood_h1"].append(h1_likelihood)
-            results["posterior_h1"].append(h1_posterior)
+            results["likelihood_h1"].append(np.mean(h1_likelihood))
+            results["posterior_h1"].append(np.mean(h1_posterior))
             results["divergence_h1"].append(h1_divergence)
 
             insig_edge_indices = [
@@ -262,7 +263,7 @@ def analyze_surrogate_statistics(
                 np.size(estimates_significance)
             h2_likelihood = tools.likelihood(estimates_significance, interest_edges_h2)
             h2_posterior = tools.posterior(estimates_significance, interest_edges_h2)
-            h2_divergence = tools.kl_divergence(h2_posterior, significance_rate_h2)
+            h2_divergence = tools.kl_divergence(h2_posterior, significance_rate_nofilter)
             print_info(f"INFO: significant edge count of H2 (w={window_size}): " +
                        f"{np.sum(interest_edges_h2)}", results_dirname)
             print_info("INFO: significant tvFC estimates count of H2 (edge variance null): " +
@@ -276,8 +277,8 @@ def analyze_surrogate_statistics(
             print_info(
                 f"INFO: H2 Divergence from null (chance): {h2_divergence}",
                 results_dirname)
-            results["likelihood_h2"].append(h2_likelihood)
-            results["posterior_h2"].append(h2_posterior)
+            results["likelihood_h2"].append(np.mean(h2_likelihood))
+            results["posterior_h2"].append(np.mean(h2_posterior))
             results["divergence_h2"].append(h2_divergence)
 
             insig_edge_indices = [
@@ -311,7 +312,7 @@ def analyze_surrogate_statistics(
                 np.size(estimates_significance)
             h1h2_likelihood = tools.likelihood(estimates_significance, interest_edges_h1h2)
             h1h2_posterior = tools.posterior(estimates_significance, interest_edges_h1h2)
-            h1h2_divergence = tools.kl_divergence(h1h2_posterior, significance_rate_h1h2)
+            h1h2_divergence = tools.kl_divergence(h1h2_posterior, significance_rate_nofilter)
             print_info(f"INFO: significant edge count of H1 & H2 (w={window_size}):" +
                        f" {np.sum(interest_edges_h1h2)}", results_dirname)
             print_info("INFO: significant tvFC estimates count of H1 & H2: " +
@@ -325,8 +326,8 @@ def analyze_surrogate_statistics(
             print_info(
                 f"INFO: H1 & H2 Divergence from null (chance): {h1h2_divergence}",
                 results_dirname)
-            results["likelihood_h1h2"].append(h1h2_likelihood)
-            results["posterior_h1h2"].append(h1h2_posterior)
+            results["likelihood_h1h2"].append(np.mean(h1h2_likelihood))
+            results["posterior_h1h2"].append(np.mean(h1h2_posterior))
             results["divergence_h1h2"].append(h1h2_divergence)
 
             insig_edge_indices = [
@@ -357,15 +358,12 @@ def analyze_surrogate_statistics(
                 np.size(estimates_significance)
             print_info("INFO: total number of significant tvFC estimates (after filtering): " +
                        f"{total_significance_count_filter}, {significance_rate_filter}", results_dirname)
-            false_significance = np.abs(tools.significant_estimates(
-                estimates_empirical[insig_edge_indices]))
-            false_positive_count = np.sum(false_significance)
             change_in_significance_rate = (
-                significance_rate_filter - (false_positive_count / np.size(false_significance))
-            ) / (false_positive_count / np.size(false_significance))
+                significance_rate_filter - significance_rate_nofilter
+            ) / significance_rate_nofilter
             h1h2_likelihood = tools.likelihood(estimates_significance, interest_edges_h1h2)
             h1h2_posterior = tools.posterior(estimates_significance, interest_edges_h1h2)
-            h1h2_divergence = tools.kl_divergence(h1h2_posterior, significance_rate_h1h2)
+            h1h2_divergence = tools.kl_divergence(h1h2_posterior, significance_rate_filter)
             print_info(
                 f"INFO: H1 & H2 Likelihood (w={window_size}): {np.mean(h1h2_likelihood)}", results_dirname)
             print_info(
@@ -375,16 +373,17 @@ def analyze_surrogate_statistics(
                 f"INFO: Total Divergence from null with new confidence levels: {h1h2_divergence}", results_dirname)
             print_info(
                 f"INFO: Change in significance rate: {change_in_significance_rate}", results_dirname)
-            results["likelihood_h1h2_updated"].append(h1h2_likelihood)
-            results["posterior_h1h2_updated"].append(h1h2_posterior)
+            results["likelihood_h1h2_updated"].append(np.mean(h1h2_likelihood))
+            results["posterior_h1h2_updated"].append(np.mean(h1h2_posterior))
             results["divergence_h1h2_updated"].append(h1h2_divergence)
 
             empirical_significance_rate = tools.scaled_significance_rate(
                 estimates_significance
             )
+            estimates_avg_sc = metric(avg_sc_data, window_size, pairs=pairs)
             null_significance = np.abs(tools.significant_estimates(
-                estimates_sc,
-                null=estimates_sc))
+                estimates_avg_sc,
+                null=estimates_avg_sc))
             null_significance_rate = tools.scaled_significance_rate(
                 null_significance
             )

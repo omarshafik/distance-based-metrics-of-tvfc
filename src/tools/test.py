@@ -130,7 +130,8 @@ def significant_estimates(
 
 def significant_time_points(
     significance_array: np.ndarray,
-    window_size: int) -> np.ndarray:
+    window_size: int,
+    pad: bool = True) -> np.ndarray:
     """ get time points of the original timeseries \
         that belongs to samples with significant SWD values
 
@@ -153,14 +154,15 @@ def significant_time_points(
     neg_significance_array = common.sliding_average(neg_significance_array, half_window)
     neg_significance_array[neg_significance_array < 0] = -1
     result_arr = pos_significance_array + neg_significance_array
-    pad_size = (window_size - 1) // 2
-    extra_pad = (window_size - 1) % 2
-    pad_width = [(0, 0)] * result_arr.ndim
-    pad_width[-1] = (pad_size + extra_pad, pad_size)
-    result_arr = np.pad(result_arr,
-                        pad_width,
-                        mode='constant',
-                        constant_values=0)
+    if pad:
+        pad_size = (window_size - 1) // 2
+        extra_pad = (window_size - 1) % 2
+        pad_width = [(0, 0)] * result_arr.ndim
+        pad_width[-1] = (pad_size + extra_pad, pad_size)
+        result_arr = np.pad(result_arr,
+                            pad_width,
+                            mode='constant',
+                            constant_values=0)
     return result_arr
 
 def scaled_significance_rate(
