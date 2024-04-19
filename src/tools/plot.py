@@ -364,6 +364,8 @@ def scatter_fc_edges(avg_fc,
     """ plot a scatter diagram of average FC (x-axis), edge variance (y-axis), \
         and edge significance rate (hue)
     """
+    if not PLOT:
+        return
     # Create a scatter plot
     plt.figure(figsize=(10, 6))
     scatter = sns.scatterplot(x=avg_fc, y=edge_variance, hue=edge_sr, palette='viridis')
