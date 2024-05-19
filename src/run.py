@@ -6,7 +6,7 @@ from datetime import datetime
 import numpy as np
 from numpy.random import MT19937, RandomState, SeedSequence
 import procedures
-from tools import print_info, prep_emp_data, sc, pr, laumann
+from tools import print_info, prep_emp_data
 
 TIMESTAMP = datetime.now().strftime('%Y%m%d%H%M%S')
 RANDOM_SEED = int(datetime.now().timestamp())
@@ -43,12 +43,6 @@ input_files.extend([
 file_to_process = input_files[random.choice(len(input_files), size=1)[0]]
 data = prep_emp_data(np.loadtxt(file_to_process).T, smooth=0)
 data_smoothed = prep_emp_data(np.loadtxt(file_to_process).T, smooth=10)
-sc_data = sc(data, random=random)
-pr_data = pr(data, random=random)
-laumann_data = laumann(data, random=random)
-sc_data_smoothed = sc(data_smoothed, random=random)
-pr_data_smoothed = pr(data_smoothed, random=random)
-laumann_data_smoothed = laumann(data_smoothed, random=random)
 
 # create results (output) directory
 if outdir is None:
@@ -58,127 +52,16 @@ if not os.path.isdir(outdir):
 results_dir = os.path.join(outdir, TIMESTAMP)
 os.mkdir(results_dir)
 
+# window_sizes = None
+# window_sizes = [29, 49]
 print_info(f"INFO: Selected file {os.path.basename(file_to_process)}", results_dir)
 print_info(f"INFO: randomization seed: {args.random_seed}", results_dir)
 procedures.simulatiom_benchmark(file_to_process, results_dir, random=random)
-procedures.generate_illustrations(data_smoothed, random=random, results_dirname=results_dir)
 procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir, random=random)
 procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir, metric_name="swc", random=random)
-window_sizes = None
-# window_sizes = [29, 49]
-# surrogate analysis using PR and unsmoothed empirical data
-print_info("#########################################################", results_dir)
-print_info("# surrogate analysis using PR and unsmoothed empirical data", results_dir)
-pr_surrogates_results_dir = os.path.join(results_dir, "pr")
-os.mkdir(pr_surrogates_results_dir)
-procedures.analyze_surrogate_statistics(
-    data,
-    pr_surrogates_results_dir,
-    sc_data=sc_data,
-    scc_data=pr_data,
-    metric_name="mtd",
-    window_sizes=window_sizes,
-    random=random)
-procedures.analyze_surrogate_statistics(
-    data,
-    pr_surrogates_results_dir,
-    sc_data=sc_data,
-    scc_data=pr_data,
-    metric_name="swc",
-    window_sizes=window_sizes,
-    random=random)
-procedures.analyze_surrogate_statistics(
-    data,
-    pr_surrogates_results_dir,
-    sc_data=sc_data,
-    scc_data=pr_data,
-    window_sizes=window_sizes,
-    random=random)
-# surrogate analysis using PR and smoothed empirical data
-print_info("#########################################################", results_dir)
-print_info("# surrogate analysis using PR and smoothed empirical data", results_dir)
-pr_smooth_surrogates_results_dir = os.path.join(results_dir, "pr-smoothed")
-os.mkdir(pr_smooth_surrogates_results_dir)
-procedures.analyze_surrogate_statistics(
-    data_smoothed,
-    pr_smooth_surrogates_results_dir,
-    sc_data=sc_data_smoothed,
-    scc_data=pr_data_smoothed,
-    metric_name="mtd",
-    window_sizes=window_sizes,
-    random=random)
-procedures.analyze_surrogate_statistics(
-    data_smoothed,
-    pr_smooth_surrogates_results_dir,
-    sc_data=sc_data_smoothed,
-    scc_data=pr_data_smoothed,
-    metric_name="swc",
-    window_sizes=window_sizes,
-    random=random)
-procedures.analyze_surrogate_statistics(
-    data_smoothed,
-    pr_smooth_surrogates_results_dir,
-    sc_data=sc_data_smoothed,
-    scc_data=pr_data_smoothed,
-    window_sizes=window_sizes,
-    random=random)
-# surrogate analysis using Laumann and unsmoothed empirical data
-print_info("#########################################################", results_dir)
-print_info("# surrogate analysis using Laumann and unsmoothed empirical data", results_dir)
-laumann_surrogates_results_dir = os.path.join(results_dir, "laumann")
-os.mkdir(laumann_surrogates_results_dir)
-procedures.analyze_surrogate_statistics(
-    data,
-    laumann_surrogates_results_dir,
-    sc_data=sc_data,
-    scc_data=laumann_data,
-    metric_name="mtd",
-    window_sizes=window_sizes,
-    random=random)
-procedures.analyze_surrogate_statistics(
-    data,
-    laumann_surrogates_results_dir,
-    sc_data=sc_data,
-    scc_data=laumann_data,
-    metric_name="swc",
-    window_sizes=window_sizes,
-    random=random)
-procedures.analyze_surrogate_statistics(
-    data,
-    laumann_surrogates_results_dir,
-    sc_data=sc_data,
-    scc_data=laumann_data,
-    window_sizes=window_sizes,
-    random=random)
-# surrogate analysis using Laumann and smoothed empirical data
-print_info("#########################################################", results_dir)
-print_info("# surrogate analysis using Laumann and smoothed empirical data", results_dir)
-laumann_smooth_surrogates_results_dir = os.path.join(results_dir, "laumann-smoothed")
-os.mkdir(laumann_smooth_surrogates_results_dir)
-procedures.analyze_surrogate_statistics(
-    data_smoothed,
-    laumann_smooth_surrogates_results_dir,
-    sc_data=sc_data_smoothed,
-    scc_data=laumann_data_smoothed,
-    metric_name="mtd",
-    window_sizes=window_sizes,
-    random=random)
-procedures.analyze_surrogate_statistics(
-    data_smoothed,
-    laumann_smooth_surrogates_results_dir,
-    sc_data=sc_data_smoothed,
-    scc_data=laumann_data_smoothed,
-    metric_name="swc",
-    window_sizes=window_sizes,
-    random=random)
-procedures.analyze_surrogate_statistics(
-    data_smoothed,
-    laumann_smooth_surrogates_results_dir,
-    sc_data=sc_data_smoothed,
-    scc_data=laumann_data_smoothed,
-    window_sizes=window_sizes,
-    random=random)
+surrogate_results = procedures.metrics_surrogates_evaluation(input_files, results_dir, n_subjects=2, random=random)
 procedures.analyze_sample_statistics(file_to_process, results_dir, random=random)
 procedures.analyze_between_subjects_ensemble_statistics(input_files, results_dir, random=random)
 procedures.analyze_metrics_correlation(input_files, results_dir, random=random)
-procedures.evaluate_tvfc_metrics(input_files, results_dir, random=random)
+# surrogate_results = "D:\\NeuroscienceLocal\\Datasets\\HCP1200_Parcellation_Timeseries_Netmats_recon2\\HCP_PTN1200_recon2\\node_timeseries\\3T_HCP1200_MSMAll_d100_ts2\\swd-results\\20240517212505\\metrics-evaluation-analysis\\surrogate-stats.csv"
+procedures.generate_illustrations(file_to_process, surrogate_stats_filepath=surrogate_results, random=random, results_dirname=results_dir)

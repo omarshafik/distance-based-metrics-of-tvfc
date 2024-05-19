@@ -164,7 +164,7 @@ def laumann(
             laumann_data = session_laumann_data
     return laumann_data
 
-def bioplausible_pair(emp_data, phase_lag = 0, noise_level = 0.5, length: int = -1, random: np.random.Generator = None):
+def spectrally_constrained_pair(emp_data, phase_lag = 0, noise_level = 0.5, length: int = -1, random: np.random.Generator = None):
     """
     Generates two simulated signals with the average empirical power spectrum
     and a controllable phase lag for all frequencies.

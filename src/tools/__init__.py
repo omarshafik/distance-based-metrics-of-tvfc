@@ -40,6 +40,6 @@ from .simulate import (
     sc_resample,
     pr,
     laumann,
-    bioplausible_pair,
+    spectrally_constrained_pair,
     sinusoid
 )

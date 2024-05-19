@@ -7,7 +7,7 @@ from .within_subject_ensemble_analysis import (
 )
 from .surrogate_analysis import (
     analyze_surrogate_statistics,
-    evaluate_tvfc_metrics
+    metrics_surrogates_evaluation
 )
 from .within_subject_sample_analysis import analyze_sample_statistics
 from .between_subjects_ensemble_analysis import analyze_between_subjects_ensemble_statistics

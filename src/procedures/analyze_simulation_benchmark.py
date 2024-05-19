@@ -1,9 +1,10 @@
 import os
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import tools
-from tools import print_info, bioplausible_pair
+from tools import print_info, spectrally_constrained_pair
 
 
 def simulatiom_benchmark(
@@ -34,6 +35,12 @@ def simulatiom_benchmark(
     phases = np.arange(pi / 16, pi, pi / 16)
     frequencies = np.arange(0.01, 0.11, 0.01)
 
+    sinusoid_results = {
+        'metric': [],
+        'window': [],
+        'uncertainty': [],
+        'sensitivity': []
+    }
     window_sizes = [9, 19, 29, 39, 49, 59, 69, 79, 89, 99, 109]
     for window_size in window_sizes:
         for metric_name, metric in metrics.items():
@@ -81,42 +88,55 @@ def simulatiom_benchmark(
             # calculate sensitivity
             sensitivity = np.mean(np.abs(phase_frequency_average_probability))
             print_info(f"INFO: {metric_name.upper()}, w={window_size} uncertainty={uncertainty} sensitivity={sensitivity}", benchmark_dir)
+            sinusoid_results["metric"].append(metric_name)
+            sinusoid_results["window"].append(window_size)
+            sinusoid_results["uncertainty"].append(uncertainty)
+            sinusoid_results["sensitivity"].append(sensitivity)
+    
+    sinusoid_results_df = pd.DataFrame(sinusoid_results)
+    sinusoid_results_filepath = os.path.join(benchmark_dir, "sinusoid.csv")
+    sinusoid_results_df.to_csv(sinusoid_results_filepath)
 
+    spectrally_const_results = {
+        'metric': [],
+        'uncertainty': [],
+        'sensitivity': []
+    }
     plot_ts = 1
     for metric_name, metric in metrics.items():
-        avg_bioplausible_significance_probability = None
+        avg_spectrally_const_significance_probability = None
         for window_size in window_sizes:
             sc_estimates = metric(sc_data, window_size)
-            bioplausible_data = None
-            bioplausible_pairs = None
-            bioplausible_idx = 0
+            spectrally_const_data = None
+            spectrally_const_pairs = None
+            spectrally_const_idx = 0
             for phase in phases:
-                bioplausible_signal1, bioplausible_signal2 = bioplausible_pair(emp_data, phase, 0,300)
-                if bioplausible_data is None:
-                    bioplausible_data = np.array([bioplausible_signal1, bioplausible_signal2])
-                    bioplausible_pairs = np.array([[bioplausible_idx, bioplausible_idx + 1]])
+                spectrally_const_signal1, spectrally_const_signal2 = spectrally_constrained_pair(emp_data, phase, 0, 300)
+                if spectrally_const_data is None:
+                    spectrally_const_data = np.array([spectrally_const_signal1, spectrally_const_signal2])
+                    spectrally_const_pairs = np.array([[spectrally_const_idx, spectrally_const_idx + 1]])
                 else:
-                    bioplausible_data = np.append(bioplausible_data, [bioplausible_signal1, bioplausible_signal2], axis=0)
-                    bioplausible_pairs = np.append(bioplausible_pairs, [[bioplausible_idx, bioplausible_idx + 1]], axis=0)
-                bioplausible_idx = bioplausible_idx + 2
+                    spectrally_const_data = np.append(spectrally_const_data, [spectrally_const_signal1, spectrally_const_signal2], axis=0)
+                    spectrally_const_pairs = np.append(spectrally_const_pairs, [[spectrally_const_idx, spectrally_const_idx + 1]], axis=0)
+                spectrally_const_idx = spectrally_const_idx + 2
                 if plot_ts:
                     tools.plot_timeseries(
-                        [bioplausible_signal1, bioplausible_signal2],
+                        [spectrally_const_signal1, spectrally_const_signal2],
                         ["0 phase", f"+(pi / {round(pi/phase, 2)}) phase"],
-                        os.path.join(benchmark_dir, f"bioplausible-signals-phase-{round(pi/phase, 2)}.png")
+                        os.path.join(benchmark_dir, f"spectrally-const-signals-phase-{round(pi/phase, 2)}.png")
                     )
             plot_ts = 0
-            bioplausible_estimates = metric(bioplausible_data , window_size , pairs = bioplausible_pairs)
-            bioplausible_significance = tools.significant_estimates(
-                bioplausible_estimates ,
+            spectrally_const_estimates = metric(spectrally_const_data , window_size , pairs = spectrally_const_pairs)
+            spectrally_const_significance = tools.significant_estimates(
+                spectrally_const_estimates ,
                 null=sc_estimates,
                 alpha = 0.05
                 )
-            average_bioplausible_significance_per_winsize = np.mean(bioplausible_significance, axis=-1)
-            avg_bioplausible_significance_probability = np.array([average_bioplausible_significance_per_winsize]) if avg_bioplausible_significance_probability is None else np.append(avg_bioplausible_significance_probability , [average_bioplausible_significance_per_winsize], axis=0)
+            average_spectrally_const_significance_per_winsize = np.mean(spectrally_const_significance, axis=-1)
+            avg_spectrally_const_significance_probability = np.array([average_spectrally_const_significance_per_winsize]) if avg_spectrally_const_significance_probability is None else np.append(avg_spectrally_const_significance_probability , [average_spectrally_const_significance_per_winsize], axis=0)
 
         sns.heatmap(
-            avg_bioplausible_significance_probability.T,
+            avg_spectrally_const_significance_probability.T,
             cmap='seismic',
             vmin=-1,
             vmax=1,
@@ -126,14 +146,23 @@ def simulatiom_benchmark(
         if results_dirname is None:
             plt.show()
         else:
-            figpath = os.path.join(benchmark_dir, f"bioplausible-{metric_name.upper()}-heatmap.png")
+            figpath = os.path.join(benchmark_dir, f"spectrally-const-{metric_name.upper()}-heatmap.png")
             plt.savefig(figpath, dpi=1200)
             plt.close()
 
         # calculate uncertainty = -1 * sum(plog(p))
-        non_zero_probabilities = np.abs(avg_bioplausible_significance_probability[avg_bioplausible_significance_probability != 0])
+        non_zero_probabilities = np.abs(avg_spectrally_const_significance_probability[avg_spectrally_const_significance_probability != 0])
         uncertainty = np.abs(np.sum(non_zero_probabilities * np.log(non_zero_probabilities)))
 
         # calculate sensitivity, i.e., the mean probability of detecting significant estimates
-        sensitivity = np.mean(np.abs(avg_bioplausible_significance_probability))
-        print_info(f"INFO: {metric_name.upper()} bioplausible uncertainty={uncertainty} sensitivity={sensitivity}", benchmark_dir)
+        sensitivity = np.mean(np.abs(avg_spectrally_const_significance_probability))
+        print_info(f"INFO: {metric_name.upper()} spectrally const uncertainty={uncertainty} sensitivity={sensitivity}", benchmark_dir)
+        spectrally_const_results["metric"].append(metric_name)
+        spectrally_const_results["uncertainty"].append(uncertainty)
+        spectrally_const_results["sensitivity"].append(sensitivity)
+
+    spectrally_const_results_df = pd.DataFrame(spectrally_const_results)
+    sc_results_filepath = os.path.join(benchmark_dir, "spectrally-constrained.csv")
+    spectrally_const_results_df.to_csv(sc_results_filepath)
+
+    return sinusoid_results_filepath, sc_results_filepath
