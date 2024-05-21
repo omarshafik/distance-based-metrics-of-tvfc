@@ -13,4 +13,4 @@ from .within_subject_sample_analysis import analyze_sample_statistics
 from .between_subjects_ensemble_analysis import analyze_between_subjects_ensemble_statistics
 from .correlation_analysis import analyze_metrics_correlation
 from .illustrations import generate_illustrations
-from .analyze_simulation_benchmark import simulatiom_benchmark
+from .analyze_simulation_benchmark import sinusoid_simulatiom_benchmark, sc_simulatiom_benchmark
