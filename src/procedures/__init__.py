@@ -6,7 +6,6 @@ from .within_subject_ensemble_analysis import (
     analyze_within_subject_swd_swc_correlation
 )
 from .surrogate_analysis import (
-    analyze_surrogate_statistics,
     metrics_surrogates_evaluation
 )
 from .within_subject_sample_analysis import analyze_sample_statistics
