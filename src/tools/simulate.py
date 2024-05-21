@@ -164,30 +164,24 @@ def laumann(
             laumann_data = session_laumann_data
     return laumann_data
 
-def spectrally_constrained_pair(emp_data, phase_lag = 0, noise_level = 0.5, length: int = -1, random: np.random.Generator = None):
+def spectrally_constrained_pair(emp_pair, phase_lag = 0, noise_level = 0.5, length: int = -1, random: np.random.Generator = None):
     """
-    Generates two simulated signals with the average empirical power spectrum
+    Generates two simulated signals with power spectra of given signals
     and a controllable phase lag for all frequencies.
-
-    Parameters:
-    emp_data (numpy.ndarray): 2D array of node time series (dimensions: nodes x time points).
-    phase_lag (float): Phase lag between the two signals in radians.
-
-    Returns:
-    numpy.ndarray: Two simulated signals with the specified properties.
     """
     if random is None:
         random = np.random
     # Compute the average power spectrum
-    power_spectrum = np.mean(np.abs(np.fft.rfft(emp_data, axis=-1)), axis=0)
+    power_spectrum1 = np.abs(np.fft.rfft(emp_pair[0], axis=-1))
+    power_spectrum2 = np.abs(np.fft.rfft(emp_pair[1], axis=-1))
     # create a time series of phases
-    noise = random.randn(emp_data.shape[-1])
+    noise = random.randn(emp_pair[0].shape[-1])
     phases = np.angle(np.fft.rfft(noise))
     # Construct the first simulated signal
-    complex_spectrum = power_spectrum * np.exp(1j * (phases))
-    signal1 = tools.normalized(np.fft.irfft(complex_spectrum, axis=-1)[500:-500])[0:length]
-    complex_spectrum = power_spectrum * np.exp(1j * (phases + phase_lag))
-    signal2 = tools.normalized(np.fft.irfft(complex_spectrum, axis=-1)[500:-500])[0:length]
+    complex_spectrum1 = power_spectrum1 * np.exp(1j * (phases))
+    signal1 = tools.normalized(np.fft.irfft(complex_spectrum1, axis=-1)[500:-500])[0:length]
+    complex_spectrum2 = power_spectrum2 * np.exp(1j * (phases + phase_lag))
+    signal2 = tools.normalized(np.fft.irfft(complex_spectrum2, axis=-1)[500:-500])[0:length]
     if noise_level > 0:
         signal1 = signal1 + np.random.normal(scale=noise_level, size=signal1.shape[-1])
         signal2 = signal2 + np.random.normal(scale=noise_level, size=signal2.shape[-1])
