@@ -113,7 +113,7 @@ def surrogate_analysis(
         np.size(estimates_significance)
     h1_likelihood = tools.likelihood(estimates_significance, interest_edges_h1)
     h1_posterior = tools.posterior(estimates_significance, interest_edges_h1)
-    h1_divergence = tools.kl_divergence(h1_posterior, significance_rate_nofilter)
+    h1_divergence = tools.kl_divergence(estimates_significance, interest_edges_h1)
     print_info(
         f"INFO: significant edge count of H1: {np.sum(interest_edges_h1)}", results_dirname)
     print_info("INFO: significant tvFC estimates count of H1 " +
@@ -144,7 +144,7 @@ def surrogate_analysis(
         np.size(estimates_significance)
     h2_likelihood = tools.likelihood(estimates_significance, interest_edges_h2)
     h2_posterior = tools.posterior(estimates_significance, interest_edges_h2)
-    h2_divergence = tools.kl_divergence(h2_posterior, significance_rate_nofilter)
+    h2_divergence = tools.kl_divergence(estimates_significance, interest_edges_h2)
     print_info(f"INFO: significant edge count of H2 (w={window_size}): " +
                 f"{np.sum(interest_edges_h2)}", results_dirname)
     print_info("INFO: significant tvFC estimates count of H2 (edge variance null): " +
@@ -174,7 +174,7 @@ def surrogate_analysis(
         np.size(estimates_significance)
     h1h2_likelihood = tools.likelihood(estimates_significance, interest_edges_h1h2)
     h1h2_posterior = tools.posterior(estimates_significance, interest_edges_h1h2)
-    h1h2_divergence = tools.kl_divergence(h1h2_posterior, significance_rate_nofilter)
+    h1h2_divergence = tools.kl_divergence(estimates_significance, interest_edges_h1h2)
     print_info(f"INFO: significant edge count of H1 & H2 (w={window_size}):" +
                 f" {np.sum(interest_edges_h1h2)}", results_dirname)
     print_info("INFO: significant tvFC estimates count of H1 & H2: " +
@@ -209,7 +209,7 @@ def surrogate_analysis(
     ) / significance_rate_nofilter
     h1h2_likelihood = tools.likelihood(estimates_significance, interest_edges_h1h2)
     h1h2_posterior = tools.posterior(estimates_significance, interest_edges_h1h2)
-    h1h2_divergence = tools.kl_divergence(h1h2_posterior, significance_rate_filter)
+    h1h2_divergence = tools.kl_divergence(estimates_significance, interest_edges_h1h2)
     print_info(
         f"INFO: H1 & H2 Likelihood (w={window_size}): {np.mean(h1h2_likelihood)}", results_dirname)
     print_info(

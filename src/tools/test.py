@@ -272,11 +272,18 @@ def posterior(significance_arr: np.ndarray, edges_of_interest: np.ndarray):
     p_sig = np.sum(np.abs(significance_arr), axis=0) / significance_arr.shape[0]
     p_h = np.sum(np.abs(edges_of_interest)) / significance_arr.shape[0]
     p_h_sig = likelihood(significance_arr, edges_of_interest)
-    return p_h_sig * p_sig / p_h
+    return np.where(p_h > 0, p_h_sig * p_sig / p_h, 0)
 
-def kl_divergence(posterior_arr:np.ndarray, prior:any):
-    """get the KL Divergence from the given prior knowledge/expectation \
-    and posterior/computed outcomes
+def kl_divergence(significance_arr: np.ndarray, edges_of_interest: np.ndarray):
+    """get the KL Divergence from observed null and non-null edges
     """
-    p_filtered = posterior_arr[posterior_arr > 0]
-    return np.sum(p_filtered*np.log(p_filtered/prior))
+    null_edges_indices = [i for i, is_of_interest in enumerate(edges_of_interest) if not is_of_interest]
+    non_null_edges_indices = [i for i, is_of_interest in enumerate(edges_of_interest) if is_of_interest]
+    significance_of_null = np.abs(significance_arr[null_edges_indices])
+    significance_of_non_null = np.abs(significance_arr[non_null_edges_indices])
+    q = np.mean(significance_of_null, axis=0)
+    p = np.mean(significance_of_non_null, axis=0)
+    valid_indices = valid_indices = (p > 0) & (q > 0)
+    p = p[valid_indices]
+    q = q[valid_indices]
+    return np.sum(p * np.log(p / q))

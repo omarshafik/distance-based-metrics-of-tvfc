@@ -60,18 +60,26 @@ sinusoid_simulation_stats_filepath = procedures.sinusoid_simulatiom_benchmark(
     file_to_process,
     results_dir,
     random=random)
-wihtin_subject_stats_filepath = procedures.analyze_within_subject_ensemble_statistics(file_to_process, results_dir, random=random)
+wihtin_subject_stats_filepath = procedures.analyze_within_subject_ensemble_statistics(
+    file_to_process,
+    results_dir,
+    random=random)
 surrogate_stats_filepath = procedures.metrics_surrogates_evaluation(
     input_files,
-    results_dir,n_subjects=2,
+    results_dir,
+    n_subjects=2,
     random=random)
-procedures.analyze_sample_statistics(file_to_process, results_dir, random=random)
-procedures.analyze_between_subjects_ensemble_statistics(input_files, results_dir, random=random)
-procedures.analyze_metrics_correlation(input_files, results_dir, random=random)
+between_subjects_stats_filepath = procedures.analyze_between_subjects_ensemble_statistics(
+    input_files,
+    results_dir,
+    random=random)
 # surrogate_results = "D:\\NeuroscienceLocal\\Datasets\\HCP1200_Parcellation_Timeseries_Netmats_recon2\\HCP_PTN1200_recon2\\node_timeseries\\3T_HCP1200_MSMAll_d100_ts2\\swd-results\\20240517212505\\metrics-evaluation-analysis\\surrogate-stats.csv"
 procedures.generate_illustrations(file_to_process,
     sinusoid_simulation_stats_filepath=sinusoid_simulation_stats_filepath,
     wihtin_subject_stats_filepath=wihtin_subject_stats_filepath,
     surrogate_stats_filepath=surrogate_stats_filepath,
+    between_subjects_stats_filepath=between_subjects_stats_filepath,
     random=random,
     results_dirname=results_dir)
+# procedures.analyze_sample_statistics(file_to_process, results_dir, random=random)
+# procedures.analyze_metrics_correlation(input_files, results_dir, random=random)
