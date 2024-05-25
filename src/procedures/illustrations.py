@@ -10,10 +10,12 @@ import tools
 plt.style.use('seaborn-v0_8-whitegrid')
 
 
+TRANSPARENT = False
+
 def generate_illustrations(
     data: any,
     sinusoid_simulation_stats_filepath: str,
-    wihtin_subject_stats_filepath: str,
+    wihtin_subject_stats_filepath: dict,
     surrogate_stats_filepath: str,
     between_subjects_stats_filepath: str,
     results_dirname: str = None,
@@ -30,6 +32,10 @@ def generate_illustrations(
     if results_dirname is not None:
         illustrations_dir = os.path.join(results_dirname, "illustrations")
         os.mkdir(illustrations_dir)
+
+    ##########################################################################################
+    # 1. sinusoids plot ######################################################################
+        
     # Sample x-axis data
     x = np.linspace(0, 2*np.pi, 500)
     # Two signals for demonstration
@@ -55,8 +61,11 @@ def generate_illustrations(
         plt.show()
     else:
         figpath = os.path.join(illustrations_dir, "sine-signals.png")
-        plt.savefig(figpath, transparent=True)
+        plt.savefig(figpath, transparent=TRANSPARENT)
         plt.close()
+
+    ##########################################################################################
+    # 2. zoomed-in sinuoid plot ##############################################################
 
     plt.figure()
     # Plot zoomed-in view around the first intersection with equal aspect ratio
@@ -75,11 +84,14 @@ def generate_illustrations(
         plt.show()
     else:
         figpath = os.path.join(illustrations_dir, "sine-signals-zoom.png")
-        plt.savefig(figpath, transparent=True)
+        plt.savefig(figpath, transparent=TRANSPARENT)
         plt.close()
 
     dy1 = np.gradient(y1, x)
     dy2 = np.gradient(y2, x)
+
+    ##########################################################################################
+    # 3. 3D sinusoid plot ####################################################################
 
     # Plotting the signals in 3D space
     fig = plt.figure()
@@ -105,8 +117,12 @@ def generate_illustrations(
         plt.show()
     else:
         figpath = os.path.join(illustrations_dir, "sine-signals-3d.png")
-        plt.savefig(figpath, transparent=True)
+        plt.savefig(figpath, transparent=TRANSPARENT)
         plt.close()
+
+
+    ##########################################################################################
+    # 4. distance measures plot ##############################################################
 
     # # Calculate absolute distances and derivatives
     abs_distances_amplitude = np.abs(y1 - y2)
@@ -130,8 +146,39 @@ def generate_illustrations(
         plt.show()
     else:
         figpath = os.path.join(illustrations_dir, "distances.png")
-        plt.savefig(figpath, transparent=True)
+        plt.savefig(figpath, transparent=TRANSPARENT)
         plt.close()
+
+    ##########################################################################################
+    # 5. sinusoid simulation results plot ####################################################
+
+    # Load the CSV data
+    csv_data = pd.read_csv(sinusoid_simulation_stats_filepath)
+
+    metrics = csv_data['metric'].unique()
+
+    # Create plots for each surrogate method and LPF window size
+    subset = csv_data
+
+    plt.figure()
+    for metric in metrics:
+        metric_data = subset[csv_data['metric'] == metric]
+        plt.plot(metric_data['window'], metric_data['uncertainty'], label=metric.upper())
+    
+    plt.xlabel('Window Size')
+    plt.ylabel('Uncertainty')
+    plt.legend()
+    plt.grid(True)
+    
+    if results_dirname is None:
+        plt.show()
+    else:
+        figpath = os.path.join(illustrations_dir, "sinuoid-simulation.png")
+        plt.savefig(figpath, transparent=TRANSPARENT)
+        plt.close()
+
+    ##########################################################################################
+    # 6. Edge dynamics significance plot #####################################################
 
     # Load the CSV data
     csv_data = pd.read_csv(surrogate_stats_filepath)
@@ -171,43 +218,117 @@ def generate_illustrations(
                 plt.show()
             else:
                 figpath = os.path.join(illustrations_dir, f"edge-variance-significance-{method}-{lpf_size}.png")
-                plt.savefig(figpath, transparent=True)
+                plt.savefig(figpath, transparent=TRANSPARENT)
                 plt.close()
 
-    # Aggregate the data
-    aggregated_data = csv_data.groupby(
-        ['window_size', 'metric', 'surrogate_method', 'lpf_window_size']
-    )['divergence_h1h2_updated'].mean().reset_index()
+    ##########################################################################################
+    # 7. within-subject ANOVA plots ##########################################################
 
-    surrogate_methods = aggregated_data['surrogate_method'].unique()
-    metrics = aggregated_data['metric'].unique()
-    lpf_window_sizes = aggregated_data['lpf_window_size'].unique()
+    # Load the CSV data
+    csv_data = pd.read_csv(wihtin_subject_stats_filepath['anova'])
 
-    # Create plots for each surrogate method and LPF window size
-    for method in surrogate_methods:
-        for lpf_size in lpf_window_sizes:
-            subset = aggregated_data[
-                (aggregated_data['surrogate_method'] == method) & (aggregated_data['lpf_window_size'] == lpf_size)]
+    metrics = csv_data['metric'].unique()
+    lpf_window_sizes = csv_data['lpf_window_size'].unique()
 
-            plt.figure()
-            for metric in metrics:
-                metric_data = subset[subset['metric'] == metric]
-                plt.plot(metric_data['window_size'], metric_data['divergence_h1h2_updated'] * 100, label=metric.upper())
-            
-            # percetage always spans from 0 to 60%
-            plt.ylim(0, 60)
+    # ANOVA for mean
+    for lpf_window_size in lpf_window_sizes:
+        plt.figure()
+        lpf_data = csv_data[csv_data['lpf_window_size'] == lpf_window_size]
+        for metric in metrics:
+            metric_data = lpf_data[lpf_data['metric'] == metric]
+            plt.plot(metric_data['window_size'], metric_data['mean_anova_pvalue'], label=metric.upper())
+        
+        plt.ylim(-0.1, 1.1)
+        plt.axhline(y=0.05, color='r', linestyle='--', linewidth=1, label='0.05 Band')
+        plt.xlabel('Window Size')
+        plt.ylabel('p-value')
+        plt.legend()
+        plt.grid(True)
+        
+        if results_dirname is None:
+            plt.show()
+        else:
+            figpath = os.path.join(illustrations_dir, f"wihtin-subject-ANOVA-mean-lpf-{lpf_window_size}.png")
+            plt.savefig(figpath, transparent=TRANSPARENT)
+            plt.close()
 
-            # Add a horizontal line at 5% significance level
-            plt.axhline(y=5, color='r', linestyle='--', linewidth=1, label='5% Band')
-    
-            plt.xlabel('Window Size')
-            plt.ylabel('Significance Percentage')
-            plt.legend(loc='upper right')
-            plt.grid(True)
-            
-            if results_dirname is None:
-                plt.show()
-            else:
-                figpath = os.path.join(illustrations_dir, f"h1h2-kl-divergence-{method}-{lpf_size}.png")
-                plt.savefig(figpath, transparent=True)
-                plt.close()
+    # ANOVA for variance
+    for lpf_window_size in lpf_window_sizes:
+        plt.figure()
+        lpf_data = csv_data[csv_data['lpf_window_size'] == lpf_window_size]
+        for metric in metrics:
+            metric_data = lpf_data[lpf_data['metric'] == metric]
+            plt.plot(metric_data['window_size'], metric_data['variance_anova_pvalue'], label=metric.upper())
+        
+        plt.ylim(-0.1, 1.1)
+        plt.axhline(y=0.05, color='r', linestyle='--', linewidth=1, label='0.05 Band')
+        plt.xlabel('Window Size')
+        plt.ylabel('p-value')
+        plt.legend()
+        plt.grid(True)
+        
+        if results_dirname is None:
+            plt.show()
+        else:
+            figpath = os.path.join(illustrations_dir, f"wihtin-subject-ANOVA-variance-lpf-{lpf_window_size}.png")
+            plt.savefig(figpath, transparent=TRANSPARENT)
+            plt.close()
+
+
+    ##########################################################################################
+    # 8. wihtin-subject AD-Fuller plots ######################################################
+
+
+    ##########################################################################################
+    # 9. between-subjects ANOVA plots ########################################################
+
+    # Load the CSV data
+    csv_data = pd.read_csv(between_subjects_stats_filepath)
+
+    metrics = csv_data['metric'].unique()
+    lpf_window_sizes = csv_data['lpf_window_size'].unique()
+
+    # ANOVA for mean
+    for lpf_window_size in lpf_window_sizes:
+        plt.figure()
+        lpf_data = csv_data[csv_data['lpf_window_size'] == lpf_window_size]
+        plt.ylim(-0.1, 1.1)
+        for metric in metrics:
+            metric_data = lpf_data[lpf_data['metric'] == metric]
+            plt.plot(metric_data['window_size'], metric_data['mean_anova_pvalue'], label=metric.upper())
+        
+        plt.axhline(y=0.05, color='r', linestyle='--', linewidth=1, label='0.05 Band')
+        plt.xlabel('Window Size')
+        plt.ylabel('p-value')
+        plt.legend()
+        plt.grid(True)
+        
+        if results_dirname is None:
+            plt.show()
+        else:
+            figpath = os.path.join(illustrations_dir, f"between-subjects-ANOVA-mean-lpf-{lpf_window_size}.png")
+            plt.savefig(figpath, transparent=TRANSPARENT)
+            plt.close()
+
+    # ANOVA for variance
+    for lpf_window_size in lpf_window_sizes:
+        plt.figure()
+        lpf_data = csv_data[csv_data['lpf_window_size'] == lpf_window_size]
+        for metric in metrics:
+            metric_data = lpf_data[lpf_data['metric'] == metric]
+            plt.plot(metric_data['window_size'], metric_data['variance_anova_pvalue'], label=metric.upper())
+        
+        plt.ylim(-0.1, 1.1)
+        plt.axhline(y=0.05, color='r', linestyle='--', linewidth=1, label='0.05 Band')
+        plt.xlabel('Window Size')
+        plt.ylabel('p-value')
+        plt.legend()
+        plt.grid(True)
+        
+        if results_dirname is None:
+            plt.show()
+        else:
+            figpath = os.path.join(illustrations_dir, f"between-subjects-ANOVA-variance-lpf-{lpf_window_size}.png")
+            plt.savefig(figpath, transparent=TRANSPARENT)
+            plt.close()
+
