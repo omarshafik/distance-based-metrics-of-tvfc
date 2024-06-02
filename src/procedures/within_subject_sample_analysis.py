@@ -21,7 +21,7 @@ def analyze_sample_statistics(
     if random is None:
         random = np.random
     print_info("##########################################################################", results_dirname)
-    print_info("INFO: analyzing within-subject sample statistics", results_dirname)
+    print_info("analyzing within-subject sample statistics", results_dirname)
     emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
     pairs = np.array(list(combinations(range(emp_data.shape[0]), 2)))
     presentation_edges = random.choice(len(pairs), size=30, replace=False)

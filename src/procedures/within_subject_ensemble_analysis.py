@@ -45,7 +45,7 @@ def analyze_within_subject_ensemble_statistics(
     print_info(
         "##########################################################################", results_dirname)
     print_info(
-        f"INFO: Caryying out within-subject ensemble statistics analysis for {os.path.basename(filename)}",
+        f"Caryying out within-subject ensemble statistics analysis for {os.path.basename(filename)}",
         results_dirname)
 
     anova_results = {
@@ -75,12 +75,12 @@ def analyze_within_subject_ensemble_statistics(
         emp_data = tools.prep_emp_data(np.loadtxt(filename).T, smooth=lpf_window_size)
         for metric_name, metric in metrics.items():
             print_info("##########################################################################", emp_dir)
-            print_info(f"INFO: analyzing within-subject {metric_name.upper()} ensemble statistics", emp_dir)
+            print_info(f"analyzing within-subject {metric_name.upper()} ensemble statistics", emp_dir)
             for window_size in window_sizes:
                 print_info(f"# window size = {window_size} ###############################################", emp_dir)
 
                 estimates = metric(emp_data, window_size=window_size)
-                print_info(f"INFO: empirical {metric_name.upper()}-based estimates mean, variance: " +
+                print_info(f"empirical {metric_name.upper()}-based estimates mean, variance: " +
                     f"{np.mean(estimates), np.var(estimates)}", emp_dir)
 
                 session_length = estimates.shape[-1] // 4
@@ -116,8 +116,8 @@ def analyze_within_subject_ensemble_statistics(
 
                 means_anova = stats.f_oneway(*edgeavg_means_per_session)
                 variances_anova = stats.f_oneway(*edgeavg_variances_per_session)
-                print_info(F"INFO: Between Sessions ANOVA's statistics for mean parameter: {means_anova}", emp_dir)
-                print_info(F"INFO: Between Sessions ANOVA's statistics for variance parameter: {variances_anova}", emp_dir)
+                print_info(F"Between Sessions ANOVA's statistics for mean parameter: {means_anova}", emp_dir)
+                print_info(F"Between Sessions ANOVA's statistics for variance parameter: {variances_anova}", emp_dir)
 
                 anova_results['filename'].append(os.path.basename(filename))
                 anova_results['lpf_window_size'].append(lpf_window_size)
@@ -155,7 +155,7 @@ def analyze_within_subject_swd_swc_correlation(
             (results will stored in a new subdirectory)
     """
     print_info("##########################################################################", results_dirname)
-    print_info("INFO: analyzing within-subject SWD-SWC correlation", results_dirname)
+    print_info("analyzing within-subject SWD-SWC correlation", results_dirname)
     emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
     pairs = np.array(list(combinations(range(emp_data.shape[0]), 2)))
 

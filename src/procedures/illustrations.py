@@ -3,14 +3,14 @@
 """
 import os
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 import pandas as pd
 import tools
 plt.style.use('seaborn-v0_8-whitegrid')
 
 
-TRANSPARENT = False
+TRANSPARENT = True
+DPI = 600
 
 def generate_illustrations(
     data: any,
@@ -61,7 +61,7 @@ def generate_illustrations(
         plt.show()
     else:
         figpath = os.path.join(illustrations_dir, "sine-signals.png")
-        plt.savefig(figpath, transparent=TRANSPARENT)
+        plt.savefig(figpath, transparent=TRANSPARENT, dpi=DPI)
         plt.close()
 
     ##########################################################################################
@@ -84,7 +84,7 @@ def generate_illustrations(
         plt.show()
     else:
         figpath = os.path.join(illustrations_dir, "sine-signals-zoom.png")
-        plt.savefig(figpath, transparent=TRANSPARENT)
+        plt.savefig(figpath, transparent=TRANSPARENT, dpi=DPI)
         plt.close()
 
     dy1 = np.gradient(y1, x)
@@ -117,7 +117,7 @@ def generate_illustrations(
         plt.show()
     else:
         figpath = os.path.join(illustrations_dir, "sine-signals-3d.png")
-        plt.savefig(figpath, transparent=TRANSPARENT)
+        plt.savefig(figpath, transparent=TRANSPARENT, dpi=DPI)
         plt.close()
 
 
@@ -146,7 +146,7 @@ def generate_illustrations(
         plt.show()
     else:
         figpath = os.path.join(illustrations_dir, "distances.png")
-        plt.savefig(figpath, transparent=TRANSPARENT)
+        plt.savefig(figpath, transparent=TRANSPARENT, dpi=DPI)
         plt.close()
 
     ##########################################################################################
@@ -174,7 +174,7 @@ def generate_illustrations(
         plt.show()
     else:
         figpath = os.path.join(illustrations_dir, "sinuoid-simulation.png")
-        plt.savefig(figpath, transparent=TRANSPARENT)
+        plt.savefig(figpath, transparent=TRANSPARENT, dpi=DPI)
         plt.close()
 
     ##########################################################################################
@@ -186,7 +186,7 @@ def generate_illustrations(
     # Aggregate the data
     aggregated_data = csv_data.groupby(
         ['window_size', 'metric', 'surrogate_method', 'lpf_window_size']
-    )['h2_significance'].mean().reset_index()
+    )['edge_variance_significance'].mean().reset_index()
 
     surrogate_methods = aggregated_data['surrogate_method'].unique()
     metrics = aggregated_data['metric'].unique()
@@ -201,7 +201,7 @@ def generate_illustrations(
             plt.figure()
             for metric in metrics:
                 metric_data = subset[subset['metric'] == metric]
-                plt.plot(metric_data['window_size'], metric_data['h2_significance'] * 100, label=metric.upper())
+                plt.plot(metric_data['window_size'], metric_data['edge_variance_significance'] * 100, label=metric.upper())
             
             # percetage always spans from 0 to 60%
             plt.ylim(0, 60)
@@ -218,7 +218,7 @@ def generate_illustrations(
                 plt.show()
             else:
                 figpath = os.path.join(illustrations_dir, f"edge-variance-significance-{method}-{lpf_size}.png")
-                plt.savefig(figpath, transparent=TRANSPARENT)
+                plt.savefig(figpath, transparent=TRANSPARENT, dpi=DPI)
                 plt.close()
 
     ##########################################################################################
@@ -249,7 +249,7 @@ def generate_illustrations(
             plt.show()
         else:
             figpath = os.path.join(illustrations_dir, f"wihtin-subject-ANOVA-mean-lpf-{lpf_window_size}.png")
-            plt.savefig(figpath, transparent=TRANSPARENT)
+            plt.savefig(figpath, transparent=TRANSPARENT, dpi=DPI)
             plt.close()
 
     # ANOVA for variance
@@ -271,7 +271,7 @@ def generate_illustrations(
             plt.show()
         else:
             figpath = os.path.join(illustrations_dir, f"wihtin-subject-ANOVA-variance-lpf-{lpf_window_size}.png")
-            plt.savefig(figpath, transparent=TRANSPARENT)
+            plt.savefig(figpath, transparent=TRANSPARENT, dpi=DPI)
             plt.close()
 
 
@@ -307,7 +307,7 @@ def generate_illustrations(
             plt.show()
         else:
             figpath = os.path.join(illustrations_dir, f"between-subjects-ANOVA-mean-lpf-{lpf_window_size}.png")
-            plt.savefig(figpath, transparent=TRANSPARENT)
+            plt.savefig(figpath, transparent=TRANSPARENT, dpi=DPI)
             plt.close()
 
     # ANOVA for variance
@@ -329,6 +329,5 @@ def generate_illustrations(
             plt.show()
         else:
             figpath = os.path.join(illustrations_dir, f"between-subjects-ANOVA-variance-lpf-{lpf_window_size}.png")
-            plt.savefig(figpath, transparent=TRANSPARENT)
+            plt.savefig(figpath, transparent=TRANSPARENT, dpi=DPI)
             plt.close()
-

@@ -25,7 +25,7 @@ def sinusoid_simulatiom_benchmark(
         }
 
     print_info("##########################################################################", results_dirname)
-    print_info("INFO: Carrying out sinusoid simulation benchmarks", results_dirname)
+    print_info("Carrying out sinusoid simulation benchmarks", results_dirname)
     emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
     sc_data = tools.sc(emp_data, random=random)
 
@@ -90,7 +90,7 @@ def sinusoid_simulatiom_benchmark(
             uncertainty = np.abs(np.sum(non_zero_probabilities * np.log(non_zero_probabilities)))
             # calculate sensitivity
             sensitivity = np.mean(np.abs(phase_frequency_average_probability))
-            print_info(f"INFO: {metric_name.upper()}, w={window_size} uncertainty={uncertainty} sensitivity={sensitivity}", benchmark_dir)
+            print_info(f"{metric_name.upper()}, w={window_size} uncertainty={uncertainty} sensitivity={sensitivity}", benchmark_dir)
             sinusoid_results["metric"].append(metric_name)
             sinusoid_results["window"].append(window_size)
             sinusoid_results["uncertainty"].append(uncertainty)
@@ -118,7 +118,7 @@ def sc_simulatiom_benchmark(
         }
 
     print_info("##########################################################################", results_dirname)
-    print_info("INFO: Carrying out spectrally-constrained simulation benchmarks", results_dirname)
+    print_info("Carrying out spectrally-constrained simulation benchmarks", results_dirname)
     emp_data = tools.prep_emp_data(np.loadtxt(filename).T)
     sc_data = tools.sc(emp_data, random=random)
 
@@ -209,7 +209,7 @@ def sc_simulatiom_benchmark(
 
         # calculate sensitivity, i.e., the mean probability of detecting significant estimates
         sensitivity = np.mean(np.abs(avg_spectrally_const_significance_probability))
-        print_info(f"INFO: {metric_name.upper()} spectrally const uncertainty={uncertainty} sensitivity={sensitivity}", benchmark_dir)
+        print_info(f"{metric_name.upper()} spectrally const uncertainty={uncertainty} sensitivity={sensitivity}", benchmark_dir)
         spectrally_const_results["metric"].append(metric_name)
         spectrally_const_results["uncertainty"].append(uncertainty)
         spectrally_const_results["sensitivity"].append(sensitivity)

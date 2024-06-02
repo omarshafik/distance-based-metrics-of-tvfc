@@ -25,7 +25,7 @@ RESULTS = {
         'lpf_window_size': [],
         'metric': [],
         'window_size': [],
-        'h2_significance': [],
+        'edge_variance_significance': [],
         'likelihood_h1': [],
         'likelihood_h2': [],
         'likelihood_h1h2': [],
@@ -96,7 +96,7 @@ def surrogate_analysis(
     total_significance_count_nofilter = np.sum(estimates_significance)
     significance_rate_nofilter = total_significance_count_nofilter / \
         np.size(estimates_significance)
-    print_info("INFO: total number of significant tvFC estimates (before filtering): " +
+    print_info("total number of significant tvFC estimates (before filtering): " +
         f"{total_significance_count_nofilter}, {significance_rate_nofilter}",
         results_dirname)
 
@@ -115,17 +115,17 @@ def surrogate_analysis(
     h1_posterior = tools.posterior(estimates_significance, interest_edges_h1)
     h1_divergence = tools.kl_divergence(estimates_significance, interest_edges_h1)
     print_info(
-        f"INFO: significant edge count of H1: {np.sum(interest_edges_h1)}", results_dirname)
-    print_info("INFO: significant tvFC estimates count of H1 " +
+        f"significant edge count of H1: {np.sum(interest_edges_h1)}", results_dirname)
+    print_info("significant tvFC estimates count of H1 " +
                 "(time-averaged estimates' null): " +
                 f"{significance_count_h1}, {significance_rate_h1}", results_dirname)
     print_info(
-        f"INFO: H1 Likelihood (w={window_size}): {np.mean(h1_likelihood)}", results_dirname)
+        f"H1 Likelihood (w={window_size}): {np.mean(h1_likelihood)}", results_dirname)
     print_info(
-        f"INFO: H1 posterior significance rate (w={window_size}): {np.mean(h1_posterior)}",
+        f"H1 posterior significance rate (w={window_size}): {np.mean(h1_posterior)}",
         results_dirname)
     print_info(
-        f"INFO: H1 Divergence from null (chance): {h1_divergence}", results_dirname)
+        f"H1 Divergence from null (chance): {h1_divergence}", results_dirname)
     results["likelihood_h1"].append(np.mean(h1_likelihood))
     results["posterior_h1"].append(np.mean(h1_posterior))
     results["divergence_h1"].append(h1_divergence)
@@ -145,23 +145,23 @@ def surrogate_analysis(
     h2_likelihood = tools.likelihood(estimates_significance, interest_edges_h2)
     h2_posterior = tools.posterior(estimates_significance, interest_edges_h2)
     h2_divergence = tools.kl_divergence(estimates_significance, interest_edges_h2)
-    print_info(f"INFO: significant edge count of H2 (w={window_size}): " +
+    print_info(f"significant edge count of H2 (w={window_size}): " +
                 f"{np.sum(interest_edges_h2)}", results_dirname)
-    print_info("INFO: significant tvFC estimates count of H2 (edge variance null): " +
+    print_info("significant tvFC estimates count of H2 (edge variance null): " +
                 f"{significance_count_h2}, {significance_rate_h2}", results_dirname)
     print_info(
-        f"INFO: H2 Likelihood (w={window_size}): {np.mean(h2_likelihood)}",
+        f"H2 Likelihood (w={window_size}): {np.mean(h2_likelihood)}",
         results_dirname)
     print_info(
-        f"INFO: H2 posterior significance rate (w={window_size}): {np.mean(h2_posterior)}",
+        f"H2 posterior significance rate (w={window_size}): {np.mean(h2_posterior)}",
         results_dirname)
     print_info(
-        f"INFO: H2 Divergence from null (chance): {h2_divergence}",
+        f"H2 Divergence from null (chance): {h2_divergence}",
         results_dirname)
     results["likelihood_h2"].append(np.mean(h2_likelihood))
     results["posterior_h2"].append(np.mean(h2_posterior))
     results["divergence_h2"].append(h2_divergence)
-    results['h2_significance'].append(np.sum(interest_edges_h2) / np.size(interest_edges_h2))
+    results['edge_variance_significance'].append(np.sum(interest_edges_h2) / np.size(interest_edges_h2))
 
     # find significantly variant/different tvFC estimates that belong to
     #   edges with significant statistics (time-averaged estimate or edge variance)
@@ -175,18 +175,18 @@ def surrogate_analysis(
     h1h2_likelihood = tools.likelihood(estimates_significance, interest_edges_h1h2)
     h1h2_posterior = tools.posterior(estimates_significance, interest_edges_h1h2)
     h1h2_divergence = tools.kl_divergence(estimates_significance, interest_edges_h1h2)
-    print_info(f"INFO: significant edge count of H1 & H2 (w={window_size}):" +
+    print_info(f"significant edge count of H1 & H2 (w={window_size}):" +
                 f" {np.sum(interest_edges_h1h2)}", results_dirname)
-    print_info("INFO: significant tvFC estimates count of H1 & H2: " +
+    print_info("significant tvFC estimates count of H1 & H2: " +
                 f"{significance_count_h1h2}, {significance_rate_h1h2}", results_dirname)
     print_info(
-        f"INFO: H1 & H2 Likelihood (w={window_size}): {np.mean(h1h2_likelihood)}",
+        f"H1 & H2 Likelihood (w={window_size}): {np.mean(h1h2_likelihood)}",
         results_dirname)
     print_info(
-        f"INFO: H1 & H2 posterior significance rate (w={window_size}): {np.mean(h1h2_posterior)}",
+        f"H1 & H2 posterior significance rate (w={window_size}): {np.mean(h1h2_posterior)}",
         results_dirname)
     print_info(
-        f"INFO: H1 & H2 Divergence from null (chance): {h1h2_divergence}",
+        f"H1 & H2 Divergence from null (chance): {h1h2_divergence}",
         results_dirname)
     results["likelihood_h1h2"].append(np.mean(h1h2_likelihood))
     results["posterior_h1h2"].append(np.mean(h1h2_posterior))
@@ -202,7 +202,7 @@ def surrogate_analysis(
     total_significance_count_filter = np.sum(estimates_significance)
     significance_rate_filter = total_significance_count_filter / \
         np.size(estimates_significance)
-    print_info("INFO: total number of significant tvFC estimates (after filtering): " +
+    print_info("total number of significant tvFC estimates (after filtering): " +
                 f"{total_significance_count_filter}, {significance_rate_filter}", results_dirname)
     change_in_significance_rate = (
         significance_rate_filter - significance_rate_nofilter
@@ -211,14 +211,14 @@ def surrogate_analysis(
     h1h2_posterior = tools.posterior(estimates_significance, interest_edges_h1h2)
     h1h2_divergence = tools.kl_divergence(estimates_significance, interest_edges_h1h2)
     print_info(
-        f"INFO: H1 & H2 Likelihood (w={window_size}): {np.mean(h1h2_likelihood)}", results_dirname)
+        f"H1 & H2 Likelihood (w={window_size}): {np.mean(h1h2_likelihood)}", results_dirname)
     print_info(
-        f"INFO: H1 & H2 posterior significance rate (w={window_size}): {np.mean(h1h2_posterior)}",
+        f"H1 & H2 posterior significance rate (w={window_size}): {np.mean(h1h2_posterior)}",
         results_dirname)
     print_info(
-        f"INFO: Total Divergence from null with new confidence levels: {h1h2_divergence}", results_dirname)
+        f"Total Divergence from null with new confidence levels: {h1h2_divergence}", results_dirname)
     print_info(
-        f"INFO: Change in significance rate: {change_in_significance_rate}", results_dirname)
+        f"Change in significance rate: {change_in_significance_rate}", results_dirname)
     results["likelihood_h1h2_updated"].append(np.mean(h1h2_likelihood))
     results["posterior_h1h2_updated"].append(np.mean(h1h2_posterior))
     results["divergence_h1h2_updated"].append(h1h2_divergence)
@@ -258,12 +258,12 @@ def metrics_surrogates_evaluation(
 
     print_info(
         "##########################################################################", results_dirname)
-    print_info(f"INFO: Caryying out tvFC metrics evaluation analysis for {n_subjects} subjects", results_dirname)
+    print_info(f"Caryying out tvFC metrics evaluation analysis for {n_subjects} subjects", results_dirname)
 
     random_file_indices = random.choice(len(input_filenames), n_subjects, replace=False)
     selected_subject_nums = [
         os.path.basename(input_filenames[subject_idx]) for subject_idx in random_file_indices]
-    print_info(f"INFO: Selected files {', '.join(selected_subject_nums)}", results_dirname)
+    print_info(f"Selected files {', '.join(selected_subject_nums)}", results_dirname)
 
     for fileidx in random_file_indices:
         filename = input_filenames[fileidx]

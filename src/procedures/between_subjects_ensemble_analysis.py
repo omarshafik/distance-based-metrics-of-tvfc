@@ -34,14 +34,14 @@ def analyze_between_subjects_ensemble_statistics(
     if window_sizes is None:
         window_sizes = [19, 49, 79, 119]
     print_info("##########################################################################", results_dirname)
-    print_info("INFO: analyzing between-subject ensemble statistics", results_dirname)
+    print_info("analyzing between-subject ensemble statistics", results_dirname)
     between_subject_dir = os.path.join(results_dirname, "between-subjects-ensemble-statistics")
     os.mkdir(between_subject_dir)
 
     random_file_indices = random.choice(len(input_filenames), n_subjects, replace=False)
     selected_subject_nums = [
         os.path.basename(input_filenames[subject_idx]) for subject_idx in random_file_indices]
-    print_info(f"INFO: Selected files {', '.join(selected_subject_nums)}", results_dirname)
+    print_info(f"Selected files {', '.join(selected_subject_nums)}", results_dirname)
     subsession_length = 200
 
     results = {
@@ -82,13 +82,13 @@ def analyze_between_subjects_ensemble_statistics(
 
             means_kruksal = stats.kruskal(*edgeavg_means_per_subject)
             variances_kruksal = stats.kruskal(*edgeavg_variances_per_subject)
-            print_info(F"INFO: Kruksal's statistics for mean parameter: {means_kruksal}", between_subject_dir)
-            print_info(F"INFO: Kruksal's statistics for variance parameter: {variances_kruksal}", between_subject_dir)
+            print_info(F"Kruksal's statistics for mean parameter: {means_kruksal}", between_subject_dir)
+            print_info(F"Kruksal's statistics for variance parameter: {variances_kruksal}", between_subject_dir)
 
             means_anova = stats.f_oneway(*edgeavg_means_per_subject)
             variances_anova = stats.f_oneway(*edgeavg_variances_per_subject)
-            print_info(F"INFO: ANOVA's statistics for mean parameter: {means_anova}", between_subject_dir)
-            print_info(F"INFO: ANOVA's statistics for variance parameter: {variances_anova}", between_subject_dir)
+            print_info(F"ANOVA's statistics for mean parameter: {means_anova}", between_subject_dir)
+            print_info(F"ANOVA's statistics for variance parameter: {variances_anova}", between_subject_dir)
 
             results['lpf_window_size'].append(lpf_window_size)
             results['metric'].append(metric_name)
