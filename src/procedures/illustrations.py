@@ -8,6 +8,7 @@ import pandas as pd
 import tools
 plt.style.use('seaborn-v0_8-whitegrid')
 
+plt.rcParams.update({'font.size': 12})
 
 TRANSPARENT = True
 DPI = 600
@@ -222,7 +223,7 @@ def generate_illustrations(
                 plt.close()
 
     ##########################################################################################
-    # 7. within-subject ANOVA plots ##########################################################
+    # 7. between-sessions ANOVA plots ##########################################################
 
     # Load the CSV data
     csv_data = pd.read_csv(wihtin_subject_stats_filepath['anova'])
@@ -248,7 +249,7 @@ def generate_illustrations(
         if results_dirname is None:
             plt.show()
         else:
-            figpath = os.path.join(illustrations_dir, f"wihtin-subject-ANOVA-mean-lpf-{lpf_window_size}.png")
+            figpath = os.path.join(illustrations_dir, f"between-sessions-ANOVA-mean-lpf-{lpf_window_size}.png")
             plt.savefig(figpath, transparent=TRANSPARENT, dpi=DPI)
             plt.close()
 
@@ -270,13 +271,13 @@ def generate_illustrations(
         if results_dirname is None:
             plt.show()
         else:
-            figpath = os.path.join(illustrations_dir, f"wihtin-subject-ANOVA-variance-lpf-{lpf_window_size}.png")
+            figpath = os.path.join(illustrations_dir, f"between-sessions-ANOVA-variance-lpf-{lpf_window_size}.png")
             plt.savefig(figpath, transparent=TRANSPARENT, dpi=DPI)
             plt.close()
 
 
     ##########################################################################################
-    # 8. wihtin-subject AD-Fuller plots ######################################################
+    # 8. wihtin-session Stationarity plots ######################################################
 
 
     ##########################################################################################
@@ -331,3 +332,114 @@ def generate_illustrations(
             figpath = os.path.join(illustrations_dir, f"between-subjects-ANOVA-variance-lpf-{lpf_window_size}.png")
             plt.savefig(figpath, transparent=TRANSPARENT, dpi=DPI)
             plt.close()
+
+    ##########################################################################################
+    # 10. time-averaged and time-resolved statistics plots ###################################
+    
+    # 10.a time-averaged FC hypothesis ########################################################
+    # Load the CSV data
+    csv_data = pd.read_csv(surrogate_stats_filepath)
+    
+    # Aggregate the data
+    aggregated_data = csv_data.groupby(
+        ['window_size', 'metric', 'surrogate_method', 'lpf_window_size']
+    )['divergence_h1'].mean().reset_index()
+
+    surrogate_methods = aggregated_data['surrogate_method'].unique()
+    metrics = aggregated_data['metric'].unique()
+    lpf_window_sizes = aggregated_data['lpf_window_size'].unique()
+
+    # Create plots for each surrogate method and LPF window size
+    for method in surrogate_methods:
+        for lpf_size in lpf_window_sizes:
+            subset = aggregated_data[
+                (aggregated_data['surrogate_method'] == method) & (aggregated_data['lpf_window_size'] == lpf_size)]
+
+            plt.figure()
+            for metric in metrics:
+                metric_data = subset[subset['metric'] == metric]
+                plt.plot(metric_data['window_size'], metric_data['divergence_h1'], label=metric.upper())
+    
+            plt.xlabel('Window Size')
+            plt.ylabel('Divergence')
+            plt.legend()
+            plt.grid(True)
+            
+            if results_dirname is None:
+                plt.show()
+            else:
+                figpath = os.path.join(illustrations_dir, f"h1-divergence-fixed-null-{method}-{lpf_size}.png")
+                plt.savefig(figpath, transparent=TRANSPARENT, dpi=DPI)
+                plt.close()
+
+    # 10.a edge variance hypothesis ###########################################################
+    # Load the CSV data
+    csv_data = pd.read_csv(surrogate_stats_filepath)
+    
+    # Aggregate the data
+    aggregated_data = csv_data.groupby(
+        ['window_size', 'metric', 'surrogate_method', 'lpf_window_size']
+    )['divergence_h2'].mean().reset_index()
+
+    surrogate_methods = aggregated_data['surrogate_method'].unique()
+    metrics = aggregated_data['metric'].unique()
+    lpf_window_sizes = aggregated_data['lpf_window_size'].unique()
+
+    # Create plots for each surrogate method and LPF window size
+    for method in surrogate_methods:
+        for lpf_size in lpf_window_sizes:
+            subset = aggregated_data[
+                (aggregated_data['surrogate_method'] == method) & (aggregated_data['lpf_window_size'] == lpf_size)]
+
+            plt.figure()
+            for metric in metrics:
+                metric_data = subset[subset['metric'] == metric]
+                plt.plot(metric_data['window_size'], metric_data['divergence_h2'], label=metric.upper())
+    
+            plt.xlabel('Window Size')
+            plt.ylabel('Divergence')
+            plt.legend()
+            plt.grid(True)
+            
+            if results_dirname is None:
+                plt.show()
+            else:
+                figpath = os.path.join(illustrations_dir, f"h2-divergence-fixed-null-{method}-{lpf_size}.png")
+                plt.savefig(figpath, transparent=TRANSPARENT, dpi=DPI)
+                plt.close()
+
+    # 10.c time-averaged FC & edge variance hypothesis ########################################
+    # Load the CSV data
+    csv_data = pd.read_csv(surrogate_stats_filepath)
+    
+    # Aggregate the data
+    aggregated_data = csv_data.groupby(
+        ['window_size', 'metric', 'surrogate_method', 'lpf_window_size']
+    )['divergence_h1h2_updated'].mean().reset_index()
+
+    surrogate_methods = aggregated_data['surrogate_method'].unique()
+    metrics = aggregated_data['metric'].unique()
+    lpf_window_sizes = aggregated_data['lpf_window_size'].unique()
+
+    # Create plots for each surrogate method and LPF window size
+    for method in surrogate_methods:
+        for lpf_size in lpf_window_sizes:
+            subset = aggregated_data[
+                (aggregated_data['surrogate_method'] == method) & (aggregated_data['lpf_window_size'] == lpf_size)]
+
+            plt.figure()
+            for metric in metrics:
+                metric_data = subset[subset['metric'] == metric]
+                plt.plot(metric_data['window_size'], metric_data['divergence_h1h2_updated'], label=metric.upper())
+    
+            plt.xlabel('Window Size')
+            plt.ylabel('Divergence')
+            plt.legend()
+            plt.grid(True)
+            
+            if results_dirname is None:
+                plt.show()
+            else:
+                figpath = os.path.join(illustrations_dir, f"h1h2-divergence-empirical-null-{method}-{lpf_size}.png")
+                plt.savefig(figpath, transparent=TRANSPARENT, dpi=DPI)
+                plt.close()
