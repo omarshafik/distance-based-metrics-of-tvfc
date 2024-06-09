@@ -128,40 +128,49 @@ def sc_simulatiom_benchmark(
 
     pi = np.pi
     phases = np.arange(pi / 16, pi, pi / 16)
-    window_sizes = [9, 19, 29, 39, 49, 59, 69, 79, 89, 99, 109]
+    window_sizes = [9, 19, 29, 39, 49, 59, 69, 79, 89, 99, 109, 119]
 
     spectrally_const_results = {
         'metric': [],
+        'window_size': [],
         'uncertainty': [],
         'sensitivity': []
     }
-    plot_ts = 1
+    
+    # get node/parcel pairs
+    pairs = np.array(list(combinations(range(emp_data.shape[0]), 2)))
 
-    # get all frequency spectra from empirical data
+        # get all frequency spectra from empirical data
     freq_spectra = np.abs(np.fft.rfft(emp_data, axis=-1))
 
     # compute the euclidean distance betweem all pairs of spectra
+    freq_spectra_distances = tools.swd(
+        freq_spectra,
+        window_size=freq_spectra.shape[-1],
+        use_derivative=False,
+        transform=None,
+        kaiser_beta=0,
+        pairs=pairs)
 
+    freq_spectra_dtype = [('idx', int), ('value', float)]
+    freq_spectra_distances = np.array(list(enumerate(freq_spectra_distances)), dtype=freq_spectra_dtype)
     # sort the spectra pairs by distance
-
-    # get node/parcel pairs
-    pairs = np.array(list(combinations(range(emp_data.shape[0]), 2)))
-    spectra_distances = []
+    freq_spectra_distances.sort(order='value')
+    sample_size = 10
+    step_size = freq_spectra_distances.shape[0] // sample_size
+    selected_freq_spectra_distances = freq_spectra_distances[::step_size]
 
     for metric_name, metric in metrics.items():
-        avg_spectrally_const_significance_probability = None
         for window_size in window_sizes:
             sc_estimates = metric(sc_data, window_size)
+            spectra_distances = []
             spectrally_const_data = None
             spectrally_const_pairs = None
             spectrally_const_idx = 0
-            for pair in pairs:
+            for pair_idx, spectra_distance in selected_freq_spectra_distances:
+                pair = pairs[pair_idx]
                 emp_signal1 = emp_data[pair[0]]
                 emp_signal2 = emp_data[pair[1]]
-                spectra_distance = euclidean(
-                    np.abs(np.fft.rfft(emp_signal1, axis=-1)),
-                    np.abs(np.fft.rfft(emp_signal1, axis=-1))
-                )
                 spectra_distances.append(spectra_distance)
                 for phase in phases:
                     spectrally_const_signal1, spectrally_const_signal2 = spectrally_constrained_pair([emp_signal1, emp_signal2], phase, 0, 300)
@@ -172,47 +181,42 @@ def sc_simulatiom_benchmark(
                         spectrally_const_data = np.append(spectrally_const_data, [spectrally_const_signal1, spectrally_const_signal2], axis=0)
                         spectrally_const_pairs = np.append(spectrally_const_pairs, [[spectrally_const_idx, spectrally_const_idx + 1]], axis=0)
                     spectrally_const_idx = spectrally_const_idx + 2
-                    if plot_ts:
-                        tools.plot_timeseries(
-                            [spectrally_const_signal1, spectrally_const_signal2],
-                            ["0 phase", f"+(pi / {round(pi/phase, 2)}) phase"],
-                            os.path.join(benchmark_dir, f"spectrally-const-signals-phase-{round(pi/phase, 2)}.png")
-                        )
-                plot_ts = 0
-                spectrally_const_estimates = metric(spectrally_const_data , window_size , pairs = spectrally_const_pairs)
-                spectrally_const_significance = tools.significant_estimates(
-                    spectrally_const_estimates ,
-                    null=sc_estimates,
-                    alpha = 0.05
-                    )
-                average_spectrally_const_significance_per_winsize = np.mean(spectrally_const_significance, axis=-1)
-                avg_spectrally_const_significance_probability = np.array([average_spectrally_const_significance_per_winsize]) if avg_spectrally_const_significance_probability is None else np.append(avg_spectrally_const_significance_probability , [average_spectrally_const_significance_per_winsize], axis=0)
+            spectrally_const_estimates = metric(spectrally_const_data , window_size , pairs = spectrally_const_pairs)
+            spectrally_const_significance = tools.significant_estimates(
+                spectrally_const_estimates ,
+                null=sc_estimates,
+                alpha = 0.05
+                )
+            average_spectrally_const_significance_per_winsize = np.reshape(
+                np.mean(spectrally_const_significance, axis=-1),
+                (sample_size, len(phases)))
 
             sns.heatmap(
-                avg_spectrally_const_significance_probability.T,
+                average_spectrally_const_significance_per_winsize.T,
                 cmap='seismic',
                 vmin=-1,
                 vmax=1,
-                xticklabels = [str(window_size) for window_size in window_sizes],
+                xticklabels = [str(round(spectra_distance, 3)) for spectra_distance in spectra_distances],
                 yticklabels = [f"pi / {round(pi/phase, 2)}" for phase in phases]
             )
             if results_dirname is None:
                 plt.show()
             else:
-                figpath = os.path.join(benchmark_dir, f"spectrally-const-{metric_name.upper()}-heatmap.png")
+                figpath = os.path.join(benchmark_dir, f"spectrally-const-{metric_name.upper()}-wsize-{window_size}-heatmap.png")
                 plt.savefig(figpath, dpi=1200)
                 plt.close()
 
-        # calculate uncertainty = -1 * sum(plog(p))
-        non_zero_probabilities = np.abs(avg_spectrally_const_significance_probability[avg_spectrally_const_significance_probability != 0])
-        uncertainty = np.abs(np.sum(non_zero_probabilities * np.log(non_zero_probabilities)))
+            # calculate uncertainty = -1 * sum(plog(p))
+            non_zero_probabilities = np.abs(average_spectrally_const_significance_per_winsize[average_spectrally_const_significance_per_winsize != 0])
+            uncertainty = np.abs(np.sum(non_zero_probabilities * np.log(non_zero_probabilities)))
 
-        # calculate sensitivity, i.e., the mean probability of detecting significant estimates
-        sensitivity = np.mean(np.abs(avg_spectrally_const_significance_probability))
-        print_info(f"{metric_name.upper()} spectrally const uncertainty={uncertainty} sensitivity={sensitivity}", benchmark_dir)
-        spectrally_const_results["metric"].append(metric_name)
-        spectrally_const_results["uncertainty"].append(uncertainty)
-        spectrally_const_results["sensitivity"].append(sensitivity)
+            # calculate sensitivity, i.e., the mean probability of detecting significant estimates
+            sensitivity = np.mean(np.abs(average_spectrally_const_significance_per_winsize))
+            print_info(f"{metric_name.upper()} w={window_size} spectrally const uncertainty={uncertainty} sensitivity={sensitivity}", benchmark_dir)
+            spectrally_const_results["metric"].append(metric_name)
+            spectrally_const_results["window_size"].append(window_size)
+            spectrally_const_results["uncertainty"].append(uncertainty)
+            spectrally_const_results["sensitivity"].append(sensitivity)
 
     spectrally_const_results_df = pd.DataFrame(spectrally_const_results)
     sc_results_filepath = os.path.join(benchmark_dir, "spectrally-constrained.csv")
