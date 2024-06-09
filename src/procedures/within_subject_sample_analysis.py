@@ -63,12 +63,18 @@ def analyze_sample_statistics(
         insig_edge_indices = [
             i for i, is_edge_significant in enumerate(edges_of_interest)
             if not is_edge_significant]
-        estimates_significance = tools.significant_estimates(
+        estimates_significance_no_filter = tools.significant_estimates(
+            estimates_empirical,
+            alpha=0.05)
+        estimates_significance_filter = tools.significant_estimates(
             estimates_empirical,
             null=estimates_empirical[insig_edge_indices])
+        estimates_significance_filter = (estimates_significance_filter.T * edges_of_interest).T
         # only process selected presentation edges
-        estimates_significance = estimates_significance[presentation_edges]
-        significant_timepoints = tools.significant_time_points(estimates_significance, window_size)
+        estimates_significance_no_filter = estimates_significance_no_filter[presentation_edges]
+        significant_timepoints_no_filter = tools.significant_time_points(estimates_significance_no_filter, window_size)
+        estimates_significance_filter = estimates_significance_filter[presentation_edges]
+        significant_timepoints_filter = tools.significant_time_points(estimates_significance_filter, window_size)
 
         # pad estimates before plotting to match empirical data time dimension
         estimates_empirical = tools.pad_timeseries(estimates_empirical, window_size)
@@ -81,8 +87,17 @@ def analyze_sample_statistics(
                 [estimates_empirical[pair_idx, start:end]],
                 timeseries_labels=[f"Region {idx1}", f"Region {idx2}"],
                 estimates_labels=["SWD"],
-                significant_timepoints=significant_timepoints[loop_idx, start:end],
+                significant_timepoints=significant_timepoints_no_filter[loop_idx, start:end],
                 out=os.path.join(
-                    sample_stats_window_dir, f"pairs-{idx1}-{idx2}-and-tvfc-estimates.png")
+                    sample_stats_window_dir, f"pairs-{idx1}-{idx2}-no-filter.png")
+            )
+            tools.plot_timeseries_and_estimates(
+                [emp_data[idx1, start:end], emp_data[idx2, start:end]],
+                [estimates_empirical[pair_idx, start:end]],
+                timeseries_labels=[f"Region {idx1}", f"Region {idx2}"],
+                estimates_labels=["SWD"],
+                significant_timepoints=significant_timepoints_filter[loop_idx, start:end],
+                out=os.path.join(
+                    sample_stats_window_dir, f"pairs-{idx1}-{idx2}-filter.png")
             )
             loop_idx += 1
