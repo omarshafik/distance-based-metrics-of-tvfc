@@ -96,5 +96,5 @@ procedures.generate_illustrations(file_to_process,
     between_subjects_stats_filepath=between_subjects_stats_filepath,
     random=random,
     results_dirname=results_dir)
-# procedures.analyze_sample_statistics(file_to_process, results_dir, random=random)
-# procedures.analyze_metrics_correlation(input_files, results_dir, random=random)
+procedures.analyze_sample_statistics(file_to_process, results_dir, random=random)
+procedures.analyze_metrics_correlation(input_files, results_dir, random=random)
