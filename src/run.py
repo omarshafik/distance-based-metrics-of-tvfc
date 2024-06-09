@@ -80,11 +80,6 @@ between_subjects_stats_filepath = procedures.analyze_between_subjects_ensemble_s
     input_files,
     results_dir,
     random=random)
-# surrogate_stats_filepath = "D:\\NeuroscienceLocal\\Datasets\\HCP1200_Parcellation_Timeseries_Netmats_recon2\\HCP_PTN1200_recon2\\node_timeseries\\3T_HCP1200_MSMAll_d100_ts2\\swd-results\\20240527223913\\metrics-evaluation-analysis\\surrogate-stats.csv"
-# sinusoid_simulation_stats_filepath = "D:\\NeuroscienceLocal\\Datasets\\HCP1200_Parcellation_Timeseries_Netmats_recon2\\HCP_PTN1200_recon2\\node_timeseries\\3T_HCP1200_MSMAll_d100_ts2\\swd-results\\20240527223913\\simulation-benchmark\\sinusoid.csv"
-# wihtin_subject_anova_stats_filepath = "D:\\NeuroscienceLocal\\Datasets\\HCP1200_Parcellation_Timeseries_Netmats_recon2\\HCP_PTN1200_recon2\\node_timeseries\\3T_HCP1200_MSMAll_d100_ts2\\swd-results\\20240527223913\\within-subject-ensemble-statistics\\anova-stats.csv"
-# wihtin_subject_adfuller_stats_filepath = "D:\\NeuroscienceLocal\\Datasets\\HCP1200_Parcellation_Timeseries_Netmats_recon2\\HCP_PTN1200_recon2\\node_timeseries\\3T_HCP1200_MSMAll_d100_ts2\\swd-results\\20240527223913\\within-subject-ensemble-statistics\\adfuller-stats.csv"
-# between_subjects_stats_filepath = "D:\\NeuroscienceLocal\\Datasets\\HCP1200_Parcellation_Timeseries_Netmats_recon2\\HCP_PTN1200_recon2\\node_timeseries\\3T_HCP1200_MSMAll_d100_ts2\\swd-results\\20240527223913\\between-subjects-ensemble-statistics\\between-subjects-stats.csv"
 wihtin_subject_stats_filepath = {
     'anova': wihtin_subject_anova_stats_filepath,
     'adfuller': wihtin_subject_adfuller_stats_filepath
