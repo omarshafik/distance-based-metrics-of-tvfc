@@ -49,7 +49,6 @@ def derivative(
 def sliding_average(
     timeseries_array: np.ndarray,
     window_size: int = 5,
-    axis: int = -1,
     kaiser_beta: int = 0,
     integrate: bool = False,
     pad: bool = True) -> np.ndarray:
@@ -81,7 +80,7 @@ def sliding_average(
         pad_size = (window_size - 1) // 2
         extra_pad = (window_size - 1) % 2
         pad_width = [(0, 0)] * timeseries_array.ndim
-        pad_width[axis] = (pad_size + extra_pad, pad_size)
+        pad_width[-1] = (pad_size + extra_pad, pad_size)
         padded_data = np.pad(timeseries_array, pad_width, mode='mean')
     else:
         padded_data = timeseries_array
@@ -89,7 +88,7 @@ def sliding_average(
     # Apply the sliding window and average along the specified axis
     averaged_data = np.apply_along_axis(
         lambda x: np.convolve(x, window, mode='valid'),
-        axis=axis,
+        axis=-1,
         arr=padded_data)
     return averaged_data
 

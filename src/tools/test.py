@@ -59,7 +59,7 @@ def get_edges_of_interest(
         one_side (bool, optional): carry out one-side hypothesis testing. Defaults to False.
     """
     n_edges = empirical_measures.shape[0]
-    edges_of_interest = np.zeros(n_edges, dtype=int)
+    edges_of_interest = np.zeros(n_edges, dtype=np.integer)
     if bonferroni:
         alpha = alpha / 4  # divide by the number of sessions
     if not one_side:

@@ -26,32 +26,29 @@ RESULTS = {
         'metric': [],
         'window_size': [],
         'edge_variance_significance': [],
-        'likelihood_h1': [],
-        'likelihood_h2': [],
-        'likelihood_h1h2': [],
-        'likelihood_h1h2_updated': [],
-        'posterior_h1': [],
-        'posterior_h2': [],
-        'posterior_h1h2': [],
-        'posterior_h1h2_updated': [],
         'divergence_h1': [],
         'divergence_h2': [],
         'divergence_h1h2': [],
         'divergence_h1h2_updated': [],
     }
 
-
+# @nb.jit
 def surrogate_analysis(
         data: any,
         window_size: int,
         results_dirname: str,
+        derivative: any = None,
         metric_name: str = "swd",
         metric: callable = None,
         lpf_window_size: int = 0,
         sc_data: np.ndarray = None,
+        sc_derivative: np.ndarray = None,
         surrogate_method: str = "PR",
         scc_data: np.ndarray = None,
+        scc_derivative: np.ndarray = None,
         pairs: np.ndarray = None,
+        timeavg_estimates_empirical: np.ndarray = None,
+        timeavg_estimates_sc: np.ndarray = None,
         info: bool = True,
         results: dict = None,
         random: np.random.Generator = None):
@@ -69,6 +66,9 @@ def surrogate_analysis(
         emp_data = tools.prep_emp_data(np.loadtxt(data).T, smooth=lpf_window_size)
     else:
         emp_data = data
+    
+    if derivative is None:
+        derivative = tools.derivative(emp_data, normalize=True)
 
     if pairs is None:
         pairs = np.array(list(combinations(range(emp_data.shape[0]), 2)))
@@ -77,16 +77,26 @@ def surrogate_analysis(
     # and autocorrelation as empirical
     if sc_data is None:
         sc_data = tools.sc(emp_data, random=random)
+    if sc_derivative is None:
+        sc_derivative = tools.derivative(sc_data, normalize=True)
 
     if scc_data is None:
         scc_data = SURROGATE_METHODS[surrogate_method]
+    if scc_derivative is None:
+        scc_derivative = tools.derivative(scc_data, normalize=True)
 
-    timeavg_estimates_empirical = metric(emp_data, emp_data.shape[-1], pairs=pairs)
-    timeavg_estimates_sc = metric(sc_data, sc_data.shape[-1], pairs=pairs)
+    print("Computing estimates")
+
+    if timeavg_estimates_empirical is None:
+        timeavg_estimates_empirical = metric(emp_data, derivative=derivative, window_size=emp_data.shape[-1], pairs=pairs)
+    if timeavg_estimates_sc is None:
+        timeavg_estimates_sc = metric(sc_data, derivative=sc_derivative, window_size=sc_data.shape[-1], pairs=pairs)
 
     # Compute tvFC estimates
-    estimates_empirical = metric(emp_data, window_size=window_size, pairs=pairs)
-    estimates_scc = metric(scc_data, window_size=window_size, pairs=pairs)
+    estimates_empirical = metric(emp_data, derivative=derivative, window_size=window_size, pairs=pairs)
+    estimates_scc = metric(scc_data, derivative=scc_derivative, window_size=window_size, pairs=pairs)
+
+    print("Finished computing estimates")
 
     edge_variance_empirical = np.var(estimates_empirical, axis=-1)
     edge_variance_scc = np.var(estimates_scc, axis=-1)
@@ -111,8 +121,6 @@ def surrogate_analysis(
     significance_count_h1 = np.sum(estimates_significance_h1)
     significance_rate_h1 = significance_count_h1 / \
         np.size(estimates_significance)
-    h1_likelihood = tools.likelihood(estimates_significance, interest_edges_h1)
-    h1_posterior = tools.posterior(estimates_significance, interest_edges_h1)
     h1_divergence = tools.kl_divergence(estimates_significance, interest_edges_h1)
     print_info(
         f"significant edge count of H1: {np.sum(interest_edges_h1)}", results_dirname)
@@ -120,14 +128,7 @@ def surrogate_analysis(
                 "(time-averaged estimates' null): " +
                 f"{significance_count_h1}, {significance_rate_h1}", results_dirname)
     print_info(
-        f"H1 Likelihood (w={window_size}): {np.mean(h1_likelihood)}", results_dirname)
-    print_info(
-        f"H1 posterior significance rate (w={window_size}): {np.mean(h1_posterior)}",
-        results_dirname)
-    print_info(
         f"H1 Divergence from null (chance): {h1_divergence}", results_dirname)
-    results["likelihood_h1"].append(np.mean(h1_likelihood))
-    results["posterior_h1"].append(np.mean(h1_posterior))
     results["divergence_h1"].append(h1_divergence)
 
     # Test edge variance null hypothesis (H2)
@@ -142,24 +143,14 @@ def surrogate_analysis(
     significance_count_h2 = np.sum(estimates_significance_h2)
     significance_rate_h2 = significance_count_h2 / \
         np.size(estimates_significance)
-    h2_likelihood = tools.likelihood(estimates_significance, interest_edges_h2)
-    h2_posterior = tools.posterior(estimates_significance, interest_edges_h2)
     h2_divergence = tools.kl_divergence(estimates_significance, interest_edges_h2)
     print_info(f"significant edge count of H2 (w={window_size}): " +
                 f"{np.sum(interest_edges_h2)}", results_dirname)
     print_info("significant tvFC estimates count of H2 (edge variance null): " +
                 f"{significance_count_h2}, {significance_rate_h2}", results_dirname)
     print_info(
-        f"H2 Likelihood (w={window_size}): {np.mean(h2_likelihood)}",
-        results_dirname)
-    print_info(
-        f"H2 posterior significance rate (w={window_size}): {np.mean(h2_posterior)}",
-        results_dirname)
-    print_info(
         f"H2 Divergence from null (chance): {h2_divergence}",
         results_dirname)
-    results["likelihood_h2"].append(np.mean(h2_likelihood))
-    results["posterior_h2"].append(np.mean(h2_posterior))
     results["divergence_h2"].append(h2_divergence)
     results['edge_variance_significance'].append(np.sum(interest_edges_h2) / np.size(interest_edges_h2))
 
@@ -172,24 +163,14 @@ def surrogate_analysis(
     significance_count_h1h2 = np.sum(estimates_significance_h1h2)
     significance_rate_h1h2 = significance_count_h1h2 / \
         np.size(estimates_significance)
-    h1h2_likelihood = tools.likelihood(estimates_significance, interest_edges_h1h2)
-    h1h2_posterior = tools.posterior(estimates_significance, interest_edges_h1h2)
     h1h2_divergence = tools.kl_divergence(estimates_significance, interest_edges_h1h2)
     print_info(f"significant edge count of H1 & H2 (w={window_size}):" +
                 f" {np.sum(interest_edges_h1h2)}", results_dirname)
     print_info("significant tvFC estimates count of H1 & H2: " +
                 f"{significance_count_h1h2}, {significance_rate_h1h2}", results_dirname)
     print_info(
-        f"H1 & H2 Likelihood (w={window_size}): {np.mean(h1h2_likelihood)}",
-        results_dirname)
-    print_info(
-        f"H1 & H2 posterior significance rate (w={window_size}): {np.mean(h1h2_posterior)}",
-        results_dirname)
-    print_info(
         f"H1 & H2 Divergence from null (chance): {h1h2_divergence}",
         results_dirname)
-    results["likelihood_h1h2"].append(np.mean(h1h2_likelihood))
-    results["posterior_h1h2"].append(np.mean(h1h2_posterior))
     results["divergence_h1h2"].append(h1h2_divergence)
 
     insig_edge_indices = [
@@ -207,20 +188,10 @@ def surrogate_analysis(
     change_in_significance_rate = (
         significance_rate_filter - significance_rate_nofilter
     ) / significance_rate_nofilter
-    h1h2_likelihood = tools.likelihood(estimates_significance, interest_edges_h1h2)
-    h1h2_posterior = tools.posterior(estimates_significance, interest_edges_h1h2)
-    h1h2_divergence = tools.kl_divergence(estimates_significance, interest_edges_h1h2)
-    print_info(
-        f"H1 & H2 Likelihood (w={window_size}): {np.mean(h1h2_likelihood)}", results_dirname)
-    print_info(
-        f"H1 & H2 posterior significance rate (w={window_size}): {np.mean(h1h2_posterior)}",
-        results_dirname)
     print_info(
         f"Total Divergence from null with new confidence levels: {h1h2_divergence}", results_dirname)
     print_info(
         f"Change in significance rate: {change_in_significance_rate}", results_dirname)
-    results["likelihood_h1h2_updated"].append(np.mean(h1h2_likelihood))
-    results["posterior_h1h2_updated"].append(np.mean(h1h2_posterior))
     results["divergence_h1h2_updated"].append(h1h2_divergence)
 
     return results
@@ -271,16 +242,21 @@ def metrics_surrogates_evaluation(
         for lpf_winsize in lpf_window_sizes:
             print_info(f"Using low-pass filter window size = {lpf_winsize}", evaluation_dir)
             emp_data = tools.prep_emp_data(np.loadtxt(filename).T, smooth=lpf_winsize)
+            derivative = tools.derivative(emp_data, normalize=True)
             pairs = np.array(list(combinations(range(emp_data.shape[0]), 2)))
 
             sc_data = tools.sc(emp_data, random=random)
+            sc_derivative = tools.derivative(sc_data, normalize=True)
             surrogates = {
                 method_name: method(emp_data, random=random)
                 for method_name, method in surrogate_methods.items()
             }
             for surrogate_method, surrogate_data in surrogates.items():
+                surrogate_derivative = tools.derivative(surrogate_data, normalize=True)
                 print_info(f"Using {surrogate_method} surrogates", evaluation_dir)
                 for metric_name, metric in metrics.items():
+                    timeavg_estimates_empirical = metric(emp_data, derivative=derivative, window_size=emp_data.shape[-1], pairs=pairs)
+                    timeavg_estimates_sc = metric(sc_data, derivative=sc_derivative, window_size=sc_data.shape[-1], pairs=pairs)
                     print_info(f"Analyzing {metric_name.upper()} metric", evaluation_dir)
                     for winsize in window_sizes:
                         print_info(f"Using window size = {winsize}", evaluation_dir)
@@ -292,14 +268,19 @@ def metrics_surrogates_evaluation(
                         results['lpf_window_size'].append(lpf_winsize)
                         surrogate_analysis(
                             emp_data,
+                            derivative=derivative,
                             window_size=winsize,
                             results_dirname=evaluation_dir,
                             lpf_window_size=lpf_winsize,
                             metric_name=metric_name,
                             metric=metric,
                             sc_data=sc_data,
+                            sc_derivative=sc_derivative,
                             surrogate_method=surrogate_method,
                             scc_data=surrogate_data,
+                            scc_derivative=surrogate_derivative,
+                            timeavg_estimates_empirical=timeavg_estimates_empirical,
+                            timeavg_estimates_sc=timeavg_estimates_sc,
                             pairs=pairs,
                             info=True,
                             results=results
