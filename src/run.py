@@ -52,8 +52,6 @@ if not os.path.isdir(outdir):
 results_dir = os.path.join(outdir, TIMESTAMP)
 os.mkdir(results_dir)
 
-# window_sizes = None
-# window_sizes = [29, 49]
 print_info(f"Selected file {os.path.basename(file_to_process)}", results_dir)
 print_info(f"randomization seed: {args.random_seed}", results_dir)
 sc_simulation_stats_filepath = procedures.sc_simulatiom_benchmark(
