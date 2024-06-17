@@ -32,7 +32,6 @@ RESULTS = {
         'divergence_h1h2_updated': [],
     }
 
-# @nb.jit
 def surrogate_analysis(
         data: any,
         window_size: int,

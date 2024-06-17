@@ -6,7 +6,7 @@ from datetime import datetime
 import numpy as np
 from numpy.random import MT19937, RandomState, SeedSequence
 import procedures
-from tools import print_info, prep_emp_data, swd
+from tools import print_info, prep_emp_data
 
 TIMESTAMP = datetime.now().strftime('%Y%m%d%H%M%S')
 RANDOM_SEED = int(datetime.now().timestamp())
