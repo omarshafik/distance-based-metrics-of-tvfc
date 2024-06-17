@@ -147,8 +147,6 @@ def sc_simulatiom_benchmark(
     freq_spectra_distances = tools.swd(
         freq_spectra,
         window_size=freq_spectra.shape[-1],
-        use_derivative=False,
-        transform=None,
         kaiser_beta=0,
         pairs=pairs)
 
